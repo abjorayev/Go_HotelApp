@@ -1,12 +1,13 @@
 package db
 
+import (
+	"hotel_app/config"
 
-import ( "gorm.io/gorm"
-"gorm.io/driver/postgres"
-"hotel_app/config"
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
 
-func main(config *config.Config) (*gorm.DB, error) {
+func Connect(config *config.Config) (*gorm.DB, error) {
   dsn := "host=" + config.DBHost + " user=" + config.DBUser + " dbname=" + config.DBName + " password=" + config.DBPassword + " sslmode=disable"
     db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
