@@ -40,3 +40,15 @@ func (r *HotelRepository) Delete(id uint) error {
 	result := r.db.Delete(&entity.Hotel{}, id)
 	return result.Error
 }
+
+func (r* HotelRepository) GetByCity(city string) ([]entity.Hotel, error) {
+	var hotels []entity.Hotel
+	result := r.db.Where("city = ?", city).Find(&hotels)
+	return hotels, result.Error
+}
+
+func (r *HotelRepository) GetByManagerID(managerID uint) ([]entity.Hotel, error) {
+	var hotels []entity.Hotel
+	result := r.db.Where("manager_id = ?", managerID).Find(&hotels)
+	return hotels, result.Error
+}

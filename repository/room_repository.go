@@ -41,3 +41,9 @@ func (r *RoomRepository) Delete(id uint) error {
 	result := r.db.Delete(&entity.Room{}, id)
 	return result.Error
 }
+
+func (r *RoomRepository) GetByHotelID(hotelID uint) ([]entity.Room, error) {
+	var rooms []entity.Room
+	result := r.db.Where("hotel_id = ?", hotelID).Find(&rooms)
+	return rooms, result.Error
+}
