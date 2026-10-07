@@ -10,4 +10,6 @@ type Room struct {
 	Price     float64   `json:"price"`
 	IsActive  bool      `json:"is_active"`
 	CreatedAt time.Time `json:"created_at"`
+	CountOfGuests int
+	Bookings  []Booking `gorm:"foreignKey:RoomID"`
 }
