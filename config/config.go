@@ -1,8 +1,9 @@
 package config
 
-import ("os"
-	"github.com/joho/godotenv"
+import (
+	"os"
 
+	"github.com/joho/godotenv"
 )
 
 type Config struct {
@@ -11,6 +12,7 @@ type Config struct {
 	DBUser     string
 	DBPassword string
 	DBName     string
+	Port	   string
 }
 
 func Load() *Config {
@@ -22,5 +24,6 @@ func Load() *Config {
 		DBUser:     os.Getenv("DB_USER"),
 		DBPassword: os.Getenv("DB_PASSWORD"),
 		DBName:     os.Getenv("DB_NAME"),
+		Port:       os.Getenv("PORT"),
 	}
 }

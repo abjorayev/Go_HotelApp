@@ -18,7 +18,7 @@ func NewRoomService(roomRepository repository.RoomRepository) *RoomService {
 }
 
 type RoomCreateDTO struct {
-	HotelID    uint    `json:"hotel_id" binding:"required"`
+	HotelID    int    `json:"hotel_id" binding:"required"`
 	RoomNumber string  `json:"room_number" binding:"required"`
 	RoomType   string  `json:"room_type" binding:"required"`
 	Price      float64 `json:"price" binding:"required"`
@@ -26,8 +26,8 @@ type RoomCreateDTO struct {
 }
 
 type RoomResponseDTO struct {
-	ID        uint    `json:"id"`
-	HotelID   uint    `json:"hotel_id"`
+	ID        int    `json:"id"`
+	HotelID   int    `json:"hotel_id"`
 	RoomNumber string  `json:"room_number"`
 	RoomType  string  `json:"room_type"`
 	Price     float64 `json:"price"`
@@ -60,7 +60,7 @@ func (s *RoomService) CreateRoom(dto *RoomCreateDTO) error {
 	return s.roomRepository.Create(&room)
 }
 
-func (s *RoomService) UpdateRoom(id uint, dto *RoomCreateDTO) error {
+func (s *RoomService) UpdateRoom(id int, dto *RoomCreateDTO) error {
 	room, err := s.roomRepository.GetByID(id)
 	if err != nil {
 		return err
@@ -70,11 +70,11 @@ func (s *RoomService) UpdateRoom(id uint, dto *RoomCreateDTO) error {
 	return s.roomRepository.Update(&roomEntity)
 }
 
-func (s *RoomService) DeleteRoom(id uint) error {
+func (s *RoomService) DeleteRoom(id int) error {
 	return s.roomRepository.Delete(id)
 }
 
-func (s *RoomService) GetById(id uint) (*RoomResponseDTO, error) {
+func (s *RoomService) GetById(id int) (*RoomResponseDTO, error) {
 	room, err := s.roomRepository.GetByID(id)
 	if err != nil {
 		return nil, err
@@ -83,7 +83,7 @@ func (s *RoomService) GetById(id uint) (*RoomResponseDTO, error) {
 	return &dto, nil
 }
 
-func (s *RoomService) GetByHotelID(hotelID uint) ([]RoomResponseDTO, error) {
+func (s *RoomService) GetByHotelID(hotelID int) ([]RoomResponseDTO, error) {
 	rooms, err := s.roomRepository.GetByHotelID(hotelID)
 	if err != nil {
 		return nil, err

@@ -3,8 +3,8 @@ package entity
 import "time"
 
 type Room struct {
-	ID        uint      `json:"id"`
-	HotelID   uint      `json:"hotel_id"`
+	ID        int      `json:"id"`
+	HotelID   int      `json:"hotel_id"`
 	RoomNumber string    `json:"room_number"`
 	RoomType  string    `json:"room_type"`
 	Price     float64   `json:"price"`
