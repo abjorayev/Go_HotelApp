@@ -20,15 +20,15 @@ func NewBookingService(bookingRepo *repository.BookingRepository, roomRepo *repo
 }
 
 type BookingCreateDTO struct {
-	RoomID    uint   `json:"room_id"`
+	RoomID    int   `json:"room_id"`
 	StartDate time.Time `json:"start_date"`
 	EndDate   time.Time `json:"end_date"`
 	CountOfGuests int    `json:"count_of_guests"`
 }
 
 type BookingResponseDTO struct {
-	ID        uint   `json:"id"`
-	RoomID    uint   `json:"room_id"`
+	ID        int   `json:"id"`
+	RoomID    int   `json:"room_id"`
 	StartDate time.Time `json:"start_date"`
 	EndDate   time.Time `json:"end_date"`
 	CountOfGuests int    `json:"count_of_guests"`
@@ -83,7 +83,7 @@ func (s *BookingService) CreateBooking(dto *BookingCreateDTO)  error {
    return nil
 }
 
-func (s *BookingService) GetBookingByID(id uint) (*BookingResponseDTO, error) {
+func (s *BookingService) GetBookingByID(id int) (*BookingResponseDTO, error) {
 	booking, err := s.bookingRepo.GetByID(id)
 	if err != nil {
 		return nil, err
@@ -91,7 +91,7 @@ func (s *BookingService) GetBookingByID(id uint) (*BookingResponseDTO, error) {
 	return ConvertToBookingResponseDTO(booking), nil
 }
 
-func (s *BookingService) DeleteBooking(id uint) error {
+func (s *BookingService) DeleteBooking(id int) error {
 	err := s.bookingRepo.Delete(id)	
 	if err != nil {
 		return fmt.Errorf("error deleting booking: %w", err)
@@ -99,7 +99,7 @@ func (s *BookingService) DeleteBooking(id uint) error {
 	return nil
 }
 
-func (s *BookingService) GetByRoomId(roomID uint) ([]*BookingResponseDTO, error) {
+func (s *BookingService) GetByRoomId(roomID int) ([]*BookingResponseDTO, error) {
 	bookings, err := s.bookingRepo.GetByRoomID(roomID)
 	if err != nil {
 		return nil, err

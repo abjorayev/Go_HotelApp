@@ -10,23 +10,34 @@ type HotelCreateDTO struct {
 	Address string `json:"address" binding:"required"`
 	City    string `json:"city" binding:"required"`
 	Stars   int    `json:"stars" binding:"required"`
-	ManagerID uint   `json:"manager_id" binding:"required"`
+	ManagerID int   `json:"manager_id" binding:"required"`
 }
 
 type HotelResponseDTO struct {
-	ID      uint   `json:"id"`
+	ID      int   `json:"id"`
 	Name    string `json:"name"`
 	Address string `json:"address"`
 	City    string `json:"city"`
 	Stars   int    `json:"stars"`
-	ManagerID uint   `json:"manager_id"`
+	ManagerID int   `json:"manager_id"`
 }
+
+type IHotelService interface {
+	GetAllHotels() ([]HotelResponseDTO, error)
+	GetHotelByID(id int) (*HotelResponseDTO, error)
+	CreateHotel(dto *HotelCreateDTO) error
+	UpdateHotel(id int, dto *HotelCreateDTO) error
+	DeleteHotel(id int) error
+	GetHotelsByCity(city string) ([]HotelResponseDTO, error)
+	GetHotelsByManagerID(managerID int) ([]HotelResponseDTO, error)	
+}
+
 
 type HotelService struct {
-	hotelRepository repository.HotelRepository
+	hotelRepository repository.IHotelRepository
 }
 
-func NewHotelService(hotelRepository repository.HotelRepository) *HotelService {
+func NewHotelService(hotelRepository repository.IHotelRepository) IHotelService {
 	return &HotelService{
 		hotelRepository: hotelRepository,
 	}
@@ -66,7 +77,7 @@ func (s *HotelService) GetAllHotels() ([]HotelResponseDTO, error)  {
 	return hotelDTOs, nil
 }
 
-func (s *HotelService) GetHotelByID(id uint) (*HotelResponseDTO, error) {
+func (s *HotelService) GetHotelByID(id int) (*HotelResponseDTO, error) {
 	hotel, err := s.hotelRepository.GetByID(id)
 	if err != nil {
 		return nil, err
@@ -84,7 +95,7 @@ func (s *HotelService) CreateHotel(dto *HotelCreateDTO) error {
 	return nil
 }
 
-func (s *HotelService) UpdateHotel(id uint, dto *HotelCreateDTO) error {
+func (s *HotelService) UpdateHotel(id int, dto *HotelCreateDTO) error {
 	hotel := MapCreateDTOToHotel(dto)
 	hotel.ID = id
 	err := s.hotelRepository.Update(&hotel)
@@ -94,7 +105,7 @@ func (s *HotelService) UpdateHotel(id uint, dto *HotelCreateDTO) error {
 	return nil
 }
 
-func (s *HotelService) DeleteHotel(id uint) error {
+func (s *HotelService) DeleteHotel(id int) error {
 	err := s.hotelRepository.Delete(id)
 	if err != nil {
 		return err
@@ -114,7 +125,7 @@ func (s *HotelService) GetHotelsByCity(city string) ([]HotelResponseDTO, error) 
 	return hotelDTOs, nil
 }
 
-func (s *HotelService) GetHotelsByManagerID(managerID uint) ([]HotelResponseDTO, error) {
+func (s *HotelService) GetHotelsByManagerID(managerID int) ([]HotelResponseDTO, error) {
 	hotels, err := s.hotelRepository.GetByManagerID(managerID)
 	hotelDTOs := []HotelResponseDTO{}
 	if err != nil {

@@ -21,7 +21,7 @@ func (r *RoomRepository) GetAll() ([]entity.Room, error) {
 	return rooms, result.Error
 }
 
-func (r *RoomRepository) GetByID(id uint) (*entity.Room, error) {
+func (r *RoomRepository) GetByID(id int) (*entity.Room, error) {
 	var room entity.Room
 	result := r.db.First(&room, id)
 	return &room, result.Error
@@ -37,12 +37,12 @@ func (r *RoomRepository) Update(room *entity.Room) error {
 	return result.Error
 }
 
-func (r *RoomRepository) Delete(id uint) error {
+func (r *RoomRepository) Delete(id int) error {
 	result := r.db.Delete(&entity.Room{}, id)
 	return result.Error
 }
 
-func (r *RoomRepository) GetByHotelID(hotelID uint) ([]entity.Room, error) {
+func (r *RoomRepository) GetByHotelID(hotelID int) ([]entity.Room, error) {
 	var rooms []entity.Room
 	result := r.db.Where("hotel_id = ?", hotelID).Find(&rooms)
 	return rooms, result.Error
