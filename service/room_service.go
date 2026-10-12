@@ -6,52 +6,63 @@ import (
 	"hotel_app/entity"
 )
 
-
 type RoomService struct {
-	roomRepository repository.RoomRepository
+	roomRepository repository.IRoomRepository
 }
 
-func NewRoomService(roomRepository repository.RoomRepository) *RoomService {
+func NewRoomService(roomRepository repository.IRoomRepository) IRoomService {
 	return &RoomService{
 		roomRepository: roomRepository,
 	}
 }
 
 type RoomCreateDTO struct {
-	HotelID    int    `json:"hotel_id" binding:"required"`
-	RoomNumber string  `json:"room_number" binding:"required"`
-	RoomType   string  `json:"room_type" binding:"required"`
-	Price      float64 `json:"price" binding:"required"`
-	IsActive   bool    `json:"is_active" binding:"required"`
+	HotelID       int     `json:"hotel_id" binding:"required"`
+	RoomNumber    string  `json:"room_number" binding:"required"`
+	RoomType      string  `json:"room_type" binding:"required"`
+	Price         float64 `json:"price" binding:"required"`
+	IsActive      bool    `json:"is_active" binding:"required"`
+	CountOfGuests int     `json:"count_of_guests" binding:"required"`
 }
 
 type RoomResponseDTO struct {
-	ID        int    `json:"id"`
-	HotelID   int    `json:"hotel_id"`
-	RoomNumber string  `json:"room_number"`
-	RoomType  string  `json:"room_type"`
-	Price     float64 `json:"price"`
-	IsActive  bool    `json:"is_active"`
+	ID            int     `json:"id"`
+	HotelID       int     `json:"hotel_id"`
+	RoomNumber    string  `json:"room_number"`
+	RoomType      string  `json:"room_type"`
+	Price         float64 `json:"price"`
+	IsActive      bool    `json:"is_active"`
+	CountOfGuests int     `json:"count_of_guests" binding:"required"`
+}
+
+type IRoomService interface {
+	CreateRoom(dto *RoomCreateDTO) error
+	UpdateRoom(id int, dto *RoomCreateDTO) error
+	DeleteRoom(id int) error
+	GetById(id int) (*RoomResponseDTO, error)
+	GetByHotelID(hotelID int) ([]RoomResponseDTO, error)
 }
 
 func MapCreateDTOToRoom(dto *RoomCreateDTO) entity.Room {
 	return entity.Room{
-		HotelID:    dto.HotelID,
-		RoomNumber: dto.RoomNumber,
-		RoomType:   dto.RoomType,
-		Price:      dto.Price,
-		IsActive:   dto.IsActive,
+		HotelID:       dto.HotelID,
+		RoomNumber:    dto.RoomNumber,
+		RoomType:      dto.RoomType,
+		Price:         dto.Price,
+		CountOfGuests: dto.CountOfGuests,
+		IsActive:      dto.IsActive,
 	}
 }
 
 func MapRoomToResponseDTO(room *entity.Room) RoomResponseDTO {
 	return RoomResponseDTO{
-		ID:        room.ID,	
-	HotelID:   room.HotelID,
-	RoomNumber: room.RoomNumber,
-	RoomType:  room.RoomType,
-	Price:     room.Price,
-	IsActive:  room.IsActive,
+		ID:            room.ID,
+		HotelID:       room.HotelID,
+		RoomNumber:    room.RoomNumber,
+		RoomType:      room.RoomType,
+		Price:         room.Price,
+		IsActive:      room.IsActive,
+		CountOfGuests: room.CountOfGuests,
 	}
 }
 
@@ -65,7 +76,7 @@ func (s *RoomService) UpdateRoom(id int, dto *RoomCreateDTO) error {
 	if err != nil {
 		return err
 	}
-    roomEntity := MapCreateDTOToRoom(dto)
+	roomEntity := MapCreateDTOToRoom(dto)
 	roomEntity.ID = room.ID
 	return s.roomRepository.Update(&roomEntity)
 }
@@ -94,4 +105,4 @@ func (s *RoomService) GetByHotelID(hotelID int) ([]RoomResponseDTO, error) {
 		dtos = append(dtos, dto)
 	}
 	return dtos, nil
-}	
+}
