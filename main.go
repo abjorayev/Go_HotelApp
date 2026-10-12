@@ -35,6 +35,10 @@ func main() {
 	roomRepo := repository.NewRoomRepository(database)
 	roomService := service.NewRoomService(roomRepo)
 	roomHandler := handlers.NewRoomHandler(roomService)
+	//Bookings
+	bookingRepo := repository.NewBookingRepository(database)
+	bookingService := service.NewBookingService(bookingRepo, roomRepo)
+	bookingHandler := handlers.NewBookingHandler(bookingService)
 	api := r.Group("/api/v1")
 	{
 		hotels := api.Group("/hotels")
@@ -52,6 +56,13 @@ func main() {
 			rooms.POST("/CreateRoom", roomHandler.CreateRoom)
 			rooms.PUT("/UpdateRoom", roomHandler.UpdateRoom)
 			rooms.DELETE("/DeleteRoom/:id", roomHandler.DeleteRoom)
+		}
+		bookings := api.Group("/bookings")
+		{
+			bookings.GET("/GetBookingById/:id", bookingHandler.GetByBookingId)
+			bookings.GET("/GetBookingsByRoomId/:id", bookingHandler.GetByRoomid)
+			bookings.POST("/CreateBooking", bookingHandler.CreateBooking)
+			bookings.DELETE("/DeleteBooking", bookingHandler.DeleteBooking)
 		}
 	}
 
