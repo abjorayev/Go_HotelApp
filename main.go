@@ -4,11 +4,12 @@ import (
 	"fmt"
 	"hotel_app/config"
 	"hotel_app/db"
-	"log"
-	"github.com/gin-gonic/gin"
 	"hotel_app/handlers"
-	"hotel_app/service"
 	"hotel_app/repository"
+	"hotel_app/service"
+	"log"
+
+	"github.com/gin-gonic/gin"
 )
 
 func main() {
@@ -26,22 +27,35 @@ func main() {
 	}
 
 	fmt.Println("Database connected and migrated!")
-    hotelRepo := repository.NewHotelRepository(database)
+	//Hotels
+	hotelRepo := repository.NewHotelRepository(database)
 	hotelService := service.NewHotelService(hotelRepo)
 	hotelHandler := handlers.NewHotelHandler(hotelService)
-	 api := r.Group("/api/v1")
-    {
-        hotels := api.Group("/hotels")
-        {
-            hotels.GET("/GetAllHotels", hotelHandler.GetHotels)
-            hotels.GET("/GetHotelByID/:id", hotelHandler.GetHotelByID)
+	//Rooms
+	roomRepo := repository.NewRoomRepository(database)
+	roomService := service.NewRoomService(roomRepo)
+	roomHandler := handlers.NewRoomHandler(roomService)
+	api := r.Group("/api/v1")
+	{
+		hotels := api.Group("/hotels")
+		{
+			hotels.GET("/GetAllHotels", hotelHandler.GetHotels)
+			hotels.GET("/GetHotelByID/:id", hotelHandler.GetHotelByID)
 			hotels.POST("/CreateHotel", hotelHandler.CreateHotel)
-			hotels.PUT("/UpdateHotel/:id", hotelHandler.UpdateHotel)	
+			hotels.PUT("/UpdateHotel/:id", hotelHandler.UpdateHotel)
 			hotels.DELETE("/DeleteHotel/:id", hotelHandler.DeleteHotel)
-        }
-    }
+		}
+		rooms := api.Group("/rooms")
+		{
+			rooms.GET("/GetRoomsByHotelID/:id", roomHandler.GetByHotelId)
+			rooms.GET("/GetRoomsByID/:id", roomHandler.GetRoomById)
+			rooms.POST("/CreateRoom", roomHandler.CreateRoom)
+			rooms.PUT("/UpdateRoom", roomHandler.UpdateRoom)
+			rooms.DELETE("/DeleteRoom/:id", roomHandler.DeleteRoom)
+		}
+	}
 
-    log.Printf("Server running on port %s", cfg.Port)
-    r.Run(":" + cfg.Port)
+	log.Printf("Server running on port %s", cfg.Port)
+	r.Run(":" + cfg.Port)
 
 }

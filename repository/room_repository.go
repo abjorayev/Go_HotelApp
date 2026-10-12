@@ -3,13 +3,23 @@ package repository
 import (
 	"gorm.io/gorm"
 
-"hotel_app/entity")
+	"hotel_app/entity"
+)
 
 type RoomRepository struct {
 	db *gorm.DB
 }
 
-func NewRoomRepository(db *gorm.DB) *RoomRepository {
+type IRoomRepository interface {
+	GetAll() ([]entity.Room, error)
+	GetByID(id int) (*entity.Room, error)
+	Create(room *entity.Room) error
+	Update(room *entity.Room) error
+	Delete(id int) error
+	GetByHotelID(hotelID int) ([]entity.Room, error)
+}
+
+func NewRoomRepository(db *gorm.DB) IRoomRepository {
 	return &RoomRepository{
 		db: db,
 	}
