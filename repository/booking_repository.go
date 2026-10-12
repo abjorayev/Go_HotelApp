@@ -1,16 +1,26 @@
 package repository
 
 import (
-	"gorm.io/gorm"
 	"hotel_app/entity"
-    "time"
+	"time"
+
+	"gorm.io/gorm"
 )
 
 type BookingRepository struct {
 	db *gorm.DB
 }
 
-func NewBookingRepository(db *gorm.DB) *BookingRepository {
+type IBookingRepository interface {
+	Create(booking *entity.Booking) error
+	GetByID(id int) (*entity.Booking, error)
+	GetByRoomID(roomID int) ([]entity.Booking, error)
+	Update(booking *entity.Booking) error
+	Delete(id int) error
+	CheckAvailability(roomID int, startDate, endDate time.Time) (bool, error)
+}
+
+func NewBookingRepository(db *gorm.DB) IBookingRepository {
 	return &BookingRepository{
 		db: db,
 	}
@@ -68,4 +78,3 @@ func (r *BookingRepository) CheckAvailability(
 
 	return count == 0, nil
 }
-

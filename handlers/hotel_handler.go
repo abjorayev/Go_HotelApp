@@ -3,9 +3,10 @@ package handlers
 import (
 	"hotel_app/service"
 
-	"github.com/gin-gonic/gin"
 	"net/http"
 	"strconv"
+
+	"github.com/gin-gonic/gin"
 )
 
 type HotelHandler struct {
@@ -16,7 +17,7 @@ func NewHotelHandler(hotelService service.IHotelService) *HotelHandler {
 	return &HotelHandler{hotelService: hotelService}
 }
 
-func (h * HotelHandler) GetHotels(c *gin.Context) {
+func (h *HotelHandler) GetHotels(c *gin.Context) {
 	hotels, err := h.hotelService.GetAllHotels()
 	if err != nil {
 		c.JSON(500, gin.H{"error": err.Error()})
@@ -26,11 +27,11 @@ func (h * HotelHandler) GetHotels(c *gin.Context) {
 }
 
 func (h *HotelHandler) GetHotelByID(c *gin.Context) {
-   id, err := strconv.Atoi(c.Param("id"))
-    if err != nil {
-        c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
-        return
-    }
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		return
+	}
 	hotel, err := h.hotelService.GetHotelByID(id)
 	if err != nil {
 		c.JSON(500, gin.H{"error": err.Error()})
@@ -82,5 +83,5 @@ func (h *HotelHandler) DeleteHotel(c *gin.Context) {
 	if err2 != nil {
 		c.JSON(500, gin.H{"error": err2.Error()})
 		return
-	}	
+	}
 }

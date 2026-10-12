@@ -8,11 +8,18 @@ import (
 )
 
 type BookingService struct {
-	bookingRepo *repository.BookingRepository
-	roomRepo    *repository.RoomRepository
+	bookingRepo repository.IBookingRepository
+	roomRepo    repository.IRoomRepository
 }
 
-func NewBookingService(bookingRepo *repository.BookingRepository, roomRepo *repository.RoomRepository) *BookingService {
+type IBookingService interface {
+	CreateBooking(dto *BookingCreateDTO) error
+	GetBookingByID(id int) (*BookingResponseDTO, error)
+	DeleteBooking(id int) error
+	GetByRoomId(roomID int) ([]*BookingResponseDTO, error)
+}
+
+func NewBookingService(bookingRepo repository.IBookingRepository, roomRepo repository.IRoomRepository) IBookingService {
 	return &BookingService{
 		bookingRepo: bookingRepo,
 		roomRepo:    roomRepo,
@@ -20,26 +27,26 @@ func NewBookingService(bookingRepo *repository.BookingRepository, roomRepo *repo
 }
 
 type BookingCreateDTO struct {
-	RoomID    int   `json:"room_id"`
-	StartDate time.Time `json:"start_date"`
-	EndDate   time.Time `json:"end_date"`
-	CountOfGuests int    `json:"count_of_guests"`
+	RoomID        int       `json:"room_id"`
+	StartDate     time.Time `json:"start_date"`
+	EndDate       time.Time `json:"end_date"`
+	CountOfGuests int       `json:"count_of_guests"`
 }
 
 type BookingResponseDTO struct {
-	ID        int   `json:"id"`
-	RoomID    int   `json:"room_id"`
-	StartDate time.Time `json:"start_date"`
-	EndDate   time.Time `json:"end_date"`
-	CountOfGuests int    `json:"count_of_guests"`
+	ID            int       `json:"id"`
+	RoomID        int       `json:"room_id"`
+	StartDate     time.Time `json:"start_date"`
+	EndDate       time.Time `json:"end_date"`
+	CountOfGuests int       `json:"count_of_guests"`
 }
 
 func ConvertToBookingResponseDTO(booking *entity.Booking) *BookingResponseDTO {
 	return &BookingResponseDTO{
-		ID:        booking.ID,	
-	RoomID:    booking.RoomID,
-		StartDate: booking.StartDate,
-		EndDate:   booking.EndDate,
+		ID:            booking.ID,
+		RoomID:        booking.RoomID,
+		StartDate:     booking.StartDate,
+		EndDate:       booking.EndDate,
 		CountOfGuests: booking.CountOfGuests,
 	}
 }
@@ -50,16 +57,16 @@ func ConvertToBookingEntity(dto *BookingCreateDTO) *entity.Booking {
 		StartDate:     dto.StartDate,
 		EndDate:       dto.EndDate,
 		CountOfGuests: dto.CountOfGuests,
-  }
+	}
 }
 
-func (s *BookingService) CreateBooking(dto *BookingCreateDTO)  error {
+func (s *BookingService) CreateBooking(dto *BookingCreateDTO) error {
 	// Check if the room exists
 	room, err := s.roomRepo.GetByID(dto.RoomID)
 	if err != nil {
 		return err
 	}
-    if room == nil {
+	if room == nil {
 		return fmt.Errorf("room with ID %d not found", dto.RoomID)
 	}
 
@@ -79,8 +86,8 @@ func (s *BookingService) CreateBooking(dto *BookingCreateDTO)  error {
 	err = s.bookingRepo.Create(booking)
 	if err != nil {
 		return fmt.Errorf("error creating booking: %w", err)
-	} 
-   return nil
+	}
+	return nil
 }
 
 func (s *BookingService) GetBookingByID(id int) (*BookingResponseDTO, error) {
@@ -92,7 +99,7 @@ func (s *BookingService) GetBookingByID(id int) (*BookingResponseDTO, error) {
 }
 
 func (s *BookingService) DeleteBooking(id int) error {
-	err := s.bookingRepo.Delete(id)	
+	err := s.bookingRepo.Delete(id)
 	if err != nil {
 		return fmt.Errorf("error deleting booking: %w", err)
 	}
@@ -107,8 +114,6 @@ func (s *BookingService) GetByRoomId(roomID int) ([]*BookingResponseDTO, error) 
 	var bookingDTOs []*BookingResponseDTO
 	for _, booking := range bookings {
 		bookingDTOs = append(bookingDTOs, ConvertToBookingResponseDTO(&booking))
-	}	
+	}
 	return bookingDTOs, nil
 }
-
-
