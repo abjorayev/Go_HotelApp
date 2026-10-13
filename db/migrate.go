@@ -11,5 +11,6 @@ func Migrate(db *gorm.DB) error {
 		&entity.Hotel{},
 		&entity.Room{},
 		&entity.Booking{},
+		&entity.User{},
 	)
 }
