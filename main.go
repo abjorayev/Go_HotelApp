@@ -41,6 +41,7 @@ func main() {
 	bookingHandler := handlers.NewBookingHandler(bookingService)
 	api := r.Group("/api/v1")
 	{
+		//api.Use(middleware.AuthMiddleware())
 		hotels := api.Group("/hotels")
 		{
 			hotels.GET("/GetAllHotels", hotelHandler.GetHotels)

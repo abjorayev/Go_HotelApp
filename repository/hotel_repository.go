@@ -1,17 +1,19 @@
 package repository
 
-import ("gorm.io/gorm" 
+import (
+	"gorm.io/gorm"
 
-"hotel_app/entity")
+	"hotel_app/entity"
+)
 
 type IHotelRepository interface {
-    GetAll() ([]entity.Hotel, error)
-    GetByID(id int) (*entity.Hotel, error)
-    Create(hotel *entity.Hotel) error
-    Update(hotel *entity.Hotel) error
-    Delete(id int) error
-    GetByCity(city string) ([]entity.Hotel, error)
-    GetByManagerID(managerID int) ([]entity.Hotel, error)
+	GetAll() ([]entity.Hotel, error)
+	GetByID(id int) (*entity.Hotel, error)
+	Create(hotel *entity.Hotel) error
+	Update(hotel *entity.Hotel) error
+	Delete(id int) error
+	GetByCity(city string) ([]entity.Hotel, error)
+	GetByManagerID(managerID int) ([]entity.Hotel, error)
 }
 
 type HotelRepository struct {
@@ -25,7 +27,7 @@ func NewHotelRepository(db *gorm.DB) IHotelRepository {
 }
 
 func (r *HotelRepository) GetAll() ([]entity.Hotel, error) {
-	var hotels []entity.	Hotel
+	var hotels []entity.Hotel
 	result := r.db.Find(&hotels)
 	return hotels, result.Error
 }
@@ -47,11 +49,11 @@ func (r *HotelRepository) Update(hotel *entity.Hotel) error {
 }
 
 func (r *HotelRepository) Delete(id int) error {
-	result := r.db.Delete(&entity.Hotel{}, id)
+	result := r.db.Model(&entity.Hotel{}).Where("id = ?", id).Update("is_active", false)
 	return result.Error
 }
 
-func (r* HotelRepository) GetByCity(city string) ([]entity.Hotel, error) {
+func (r *HotelRepository) GetByCity(city string) ([]entity.Hotel, error) {
 	var hotels []entity.Hotel
 	result := r.db.Where("city = ?", city).Find(&hotels)
 	return hotels, result.Error
