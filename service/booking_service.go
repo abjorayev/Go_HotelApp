@@ -75,11 +75,12 @@ func (s *BookingService) CreateBooking(dto *BookingCreateDTO) error {
 	}
 
 	aviable, err := s.bookingRepo.CheckAvailability(dto.RoomID, dto.StartDate, dto.EndDate)
-	if !aviable {
-		return fmt.Errorf("room with ID %d is not available from %s to %s", dto.RoomID, dto.StartDate, dto.EndDate)
-	}
 	if err != nil {
 		return fmt.Errorf("error checking room availability: %w", err)
+	}
+
+	if !aviable {
+		return fmt.Errorf("room with ID %d is not available from %s to %s", dto.RoomID, dto.StartDate, dto.EndDate)
 	}
 
 	booking := ConvertToBookingEntity(dto)
