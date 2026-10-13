@@ -65,11 +65,12 @@ func (h *HotelHandler) UpdateHotel(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	err2 := h.hotelService.UpdateHotel(id, &hotelDTO)
-	if err2 != nil {
-		c.JSON(500, gin.H{"error": err2.Error()})
+	//err2 := h.hotelService.UpdateHotel(id, &hotelDTO)
+	if err := h.hotelService.UpdateHotel(id, &hotelDTO); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+
 	c.JSON(200, gin.H{"message": "Hotel updated successfully"})
 }
 
@@ -79,9 +80,10 @@ func (h *HotelHandler) DeleteHotel(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
 		return
 	}
-	err2 := h.hotelService.DeleteHotel(id)
-	if err2 != nil {
-		c.JSON(500, gin.H{"error": err2.Error()})
+	//err2 := h.hotelService.DeleteHotel(id)
+	if err := h.hotelService.DeleteHotel(id); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	c.JSON(200, gin.H{"message": "Hotel deleted successfully"})
 }

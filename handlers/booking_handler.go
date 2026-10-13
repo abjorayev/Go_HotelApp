@@ -51,11 +51,12 @@ func (h *BookingHandler) DeleteBooking(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
 		return
 	}
-	err2 := h.bookingService.DeleteBooking(id)
-	if err2 != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
+	//err := h.bookingService.DeleteBooking(id)
+	if err := h.bookingService.DeleteBooking(id); err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
+	c.JSON(200, gin.H{"message": "booking deleted successfully"})
 }
 
 func (h *BookingHandler) GetByRoomid(c *gin.Context) {
