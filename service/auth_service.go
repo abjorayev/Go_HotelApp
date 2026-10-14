@@ -18,7 +18,7 @@ var (
 
 type IAuthService interface {
 	Register(dto UserCreateDTO) (string, error)
-	//Login(login, password string) (string, error)
+	Login(dto UserCreateDTO) (string, error)
 }
 
 type AuthService struct {
@@ -60,5 +60,20 @@ func (s *AuthService) Register(dto UserCreateDTO) (string, error) {
 		return "", err
 	}
 
+	return jwt.GenerateJwtToken(user.Id)
+}
+
+func (s *AuthService) Login(dto UserCreateDTO) (string, error) {
+	user, err := s.userRepository.GetByLogin(dto.Login)
+	if err != nil {
+		return "", err
+	}
+	if user == nil {
+		return "", nil
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(dto.Password)); err != nil {
+		return "", ErrInvalidCredentials
+	}
 	return jwt.GenerateJwtToken(user.Id)
 }
