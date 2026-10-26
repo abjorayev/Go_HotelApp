@@ -21,12 +21,12 @@ func (s *AuthHandler) Register(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	str, err := s.authService.Register(user)
+	token, err := s.authService.Register(user)
 	if err != nil {
 		c.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(200, str)
+	c.JSON(http.StatusOK, gin.H{"token": token})
 }
 
 func (s *AuthHandler) Login(c *gin.Context) {
@@ -35,10 +35,10 @@ func (s *AuthHandler) Login(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	str, err := s.authService.Login(user)
+	token, err := s.authService.Login(user)
 	if err != nil {
 		c.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
-	c.JSON(200, str)
+	c.JSON(http.StatusOK, gin.H{"token": token})
 }

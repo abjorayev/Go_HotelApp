@@ -60,7 +60,7 @@ func (s *AuthService) Register(dto UserCreateDTO) (string, error) {
 		return "", err
 	}
 
-	return jwt.GenerateJwtToken(user.Id)
+	return jwt.GenerateJwtToken(user.Id, "user")
 }
 
 func (s *AuthService) Login(dto UserCreateDTO) (string, error) {
@@ -75,5 +75,5 @@ func (s *AuthService) Login(dto UserCreateDTO) (string, error) {
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(dto.Password)); err != nil {
 		return "", ErrInvalidCredentials
 	}
-	return jwt.GenerateJwtToken(user.Id)
+	return jwt.GenerateJwtToken(user.Id, "user")
 }

@@ -4,4 +4,6 @@ type User struct {
 	Id       int
 	Login    string
 	Password string
+	RoleId   int
+	Role     Role
 }

@@ -27,6 +27,11 @@ func main() {
 		log.Fatal(err)
 	}
 
+	err = db.Seed(database)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	fmt.Println("Database connected and migrated!")
 	//Hotels
 	hotelRepo := repository.NewHotelRepository(database)
@@ -45,24 +50,24 @@ func main() {
 	authService := service.NewAuthService(authRepo)
 	authHandler := handlers.NewAuthHandler(authService)
 	auth := middleware.AuthMiddleware()
-
+	admin := middleware.RequireRole("admin")
 	api := r.Group("/api/v1")
 	{
 		hotels := api.Group("/hotels")
 		{
 			hotels.GET("/GetAllHotels", hotelHandler.GetHotels)
 			hotels.GET("/GetHotelByID/:id", hotelHandler.GetHotelByID)
-			hotels.POST("/CreateHotel", auth, hotelHandler.CreateHotel)
-			hotels.PUT("/UpdateHotel/:id", auth, hotelHandler.UpdateHotel)
-			hotels.DELETE("/DeleteHotel/:id", auth, hotelHandler.DeleteHotel)
+			hotels.POST("/CreateHotel", auth, admin, hotelHandler.CreateHotel)
+			hotels.PUT("/UpdateHotel/:id", auth, admin, hotelHandler.UpdateHotel)
+			hotels.DELETE("/DeleteHotel/:id", auth, admin, hotelHandler.DeleteHotel)
 		}
 		rooms := api.Group("/rooms")
 		{
 			rooms.GET("/GetRoomsByHotelID/:id", roomHandler.GetByHotelId)
 			rooms.GET("/GetRoomsByID/:id", roomHandler.GetRoomById)
-			rooms.POST("/CreateRoom", auth, roomHandler.CreateRoom)
-			rooms.PUT("/UpdateRoom", auth, roomHandler.UpdateRoom)
-			rooms.DELETE("/DeleteRoom/:id", auth, roomHandler.DeleteRoom)
+			rooms.POST("/CreateRoom", auth, admin, roomHandler.CreateRoom)
+			rooms.PUT("/UpdateRoom", auth, admin, roomHandler.UpdateRoom)
+			rooms.DELETE("/DeleteRoom/:id", auth, admin, roomHandler.DeleteRoom)
 		}
 		bookings := api.Group("/bookings")
 		{
