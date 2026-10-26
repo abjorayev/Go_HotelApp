@@ -44,7 +44,22 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
+		role, _ := claims["role"].(string)
+		c.Set("role", role)
 		c.Set("user_id", userID)
 		c.Next()
+	}
+}
+
+func RequireRole(roles ...string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		role := c.GetString("role")
+		for _, r := range roles {
+			if role == r {
+				c.Next()
+				return
+			}
+		}
+		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "forbidden"})
 	}
 }
