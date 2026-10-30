@@ -6,20 +6,20 @@ import (
 )
 
 type HotelCreateDTO struct {
-	Name string `json:"name" binding:"required"`
-	Address string `json:"address" binding:"required"`
-	City    string `json:"city" binding:"required"`
-	Stars   int    `json:"stars" binding:"required"`
-	ManagerID int   `json:"manager_id" binding:"required"`
+	Name      string `json:"name" binding:"required"`
+	Address   string `json:"address" binding:"required"`
+	City      string `json:"city" binding:"required"`
+	Stars     int    `json:"stars" binding:"required"`
+	ManagerID int    `json:"manager_id" binding:"required"`
 }
 
 type HotelResponseDTO struct {
-	ID      int   `json:"id"`
-	Name    string `json:"name"`
-	Address string `json:"address"`
-	City    string `json:"city"`
-	Stars   int    `json:"stars"`
-	ManagerID int   `json:"manager_id"`
+	ID        int    `json:"id"`
+	Name      string `json:"name"`
+	Address   string `json:"address"`
+	City      string `json:"city"`
+	Stars     int    `json:"stars"`
+	ManagerID int    `json:"manager_id"`
 }
 
 type IHotelService interface {
@@ -29,9 +29,8 @@ type IHotelService interface {
 	UpdateHotel(id int, dto *HotelCreateDTO) error
 	DeleteHotel(id int) error
 	GetHotelsByCity(city string) ([]HotelResponseDTO, error)
-	GetHotelsByManagerID(managerID int) ([]HotelResponseDTO, error)	
+	GetHotelsByManagerID(managerID int) ([]HotelResponseDTO, error)
 }
-
 
 type HotelService struct {
 	hotelRepository repository.IHotelRepository
@@ -45,28 +44,28 @@ func NewHotelService(hotelRepository repository.IHotelRepository) IHotelService 
 
 func MapHotelToResponseDTO(hotel *entity.Hotel) HotelResponseDTO {
 	return HotelResponseDTO{
-		ID: hotel.ID,
-		Name: hotel.Name,
-		Address: hotel.Address,
-		City: hotel.City,
-		Stars: hotel.Stars,
+		ID:        hotel.ID,
+		Name:      hotel.Name,
+		Address:   hotel.Address,
+		City:      hotel.City,
+		Stars:     hotel.Stars,
 		ManagerID: hotel.ManagerID,
 	}
 }
 
 func MapCreateDTOToHotel(dto *HotelCreateDTO) entity.Hotel {
 	return entity.Hotel{
-	
-		Name: dto.Name,
-	Address: dto.Address,
-	City: dto.City,
-	Stars: dto.Stars,
-	ManagerID: dto.ManagerID,
+		IsActive:  true,
+		Name:      dto.Name,
+		Address:   dto.Address,
+		City:      dto.City,
+		Stars:     dto.Stars,
+		ManagerID: dto.ManagerID,
 	}
 }
 
-func (s *HotelService) GetAllHotels() ([]HotelResponseDTO, error)  {
-    hotels, err := s.hotelRepository.GetAll()
+func (s *HotelService) GetAllHotels() ([]HotelResponseDTO, error) {
+	hotels, err := s.hotelRepository.GetAll()
 	if err != nil {
 		return nil, err
 	}
@@ -96,13 +95,17 @@ func (s *HotelService) CreateHotel(dto *HotelCreateDTO) error {
 }
 
 func (s *HotelService) UpdateHotel(id int, dto *HotelCreateDTO) error {
-	hotel := MapCreateDTOToHotel(dto)
-	hotel.ID = id
-	err := s.hotelRepository.Update(&hotel)
+	hotel, err := s.hotelRepository.GetByID(id)
 	if err != nil {
 		return err
 	}
-	return nil
+	hotel.Name = dto.Name
+	hotel.Address = dto.Address
+	hotel.City = dto.City
+	hotel.Stars = dto.Stars
+	hotel.ManagerID = dto.ManagerID
+
+	return s.hotelRepository.Update(hotel)
 }
 
 func (s *HotelService) DeleteHotel(id int) error {

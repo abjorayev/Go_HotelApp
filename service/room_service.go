@@ -76,9 +76,15 @@ func (s *RoomService) UpdateRoom(id int, dto *RoomCreateDTO) error {
 	if err != nil {
 		return err
 	}
-	roomEntity := MapCreateDTOToRoom(dto)
-	roomEntity.ID = room.ID
-	return s.roomRepository.Update(&roomEntity)
+	//roomEntity := MapCreateDTOToRoom(dto)
+	//roomEntity.ID = room.ID
+	room.HotelID = dto.HotelID
+	room.RoomNumber = dto.RoomNumber
+	room.RoomType = dto.RoomType
+	room.Price = dto.Price
+	room.IsActive = dto.IsActive
+	room.CountOfGuests = dto.CountOfGuests
+	return s.roomRepository.Update(room)
 }
 
 func (s *RoomService) DeleteRoom(id int) error {

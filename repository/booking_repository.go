@@ -18,6 +18,7 @@ type IBookingRepository interface {
 	Update(booking *entity.Booking) error
 	Delete(id int) error
 	CheckAvailability(roomID int, startDate, endDate time.Time) (bool, error)
+	GetByUserId(userId int) ([]entity.Booking, error)
 }
 
 func NewBookingRepository(db *gorm.DB) IBookingRepository {
@@ -40,6 +41,12 @@ func (r *BookingRepository) GetByID(id int) (*entity.Booking, error) {
 func (r *BookingRepository) GetByRoomID(roomID int) ([]entity.Booking, error) {
 	var bookings []entity.Booking
 	result := r.db.Where("room_id = ?", roomID).Find(&bookings)
+	return bookings, result.Error
+}
+
+func (r *BookingRepository) GetByUserId(userId int) ([]entity.Booking, error) {
+	var bookings []entity.Booking
+	result := r.db.Where("user_id = ?", userId).Find(&bookings)
 	return bookings, result.Error
 }
 

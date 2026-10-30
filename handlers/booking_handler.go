@@ -3,6 +3,7 @@ package handlers
 import (
 	"hotel_app/service"
 
+	"hotel_app/middleware"
 	"net/http"
 	"strconv"
 
@@ -23,7 +24,12 @@ func (h *BookingHandler) CreateBooking(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-	err := h.bookingService.CreateBooking(&newBooking)
+	userID, ok := middleware.CurrentUserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	err := h.bookingService.CreateBooking(&newBooking, userID)
 	if err != nil {
 		c.JSON(500, gin.H{"error": err.Error()})
 		return
@@ -72,4 +78,18 @@ func (h *BookingHandler) GetByRoomid(c *gin.Context) {
 	}
 	c.JSON(200, bookings)
 
+}
+
+func (h *BookingHandler) GetByUserId(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		return
+	}
+	bookings, err := h.bookingService.GetByUserId(id)
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(200, bookings)
 }

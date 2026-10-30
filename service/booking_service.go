@@ -13,10 +13,11 @@ type BookingService struct {
 }
 
 type IBookingService interface {
-	CreateBooking(dto *BookingCreateDTO) error
+	CreateBooking(dto *BookingCreateDTO, userId int) error
 	GetBookingByID(id int) (*BookingResponseDTO, error)
 	DeleteBooking(id int) error
 	GetByRoomId(roomID int) ([]*BookingResponseDTO, error)
+	GetByUserId(userId int) ([]*BookingResponseDTO, error)
 }
 
 func NewBookingService(bookingRepo repository.IBookingRepository, roomRepo repository.IRoomRepository) IBookingService {
@@ -60,7 +61,7 @@ func ConvertToBookingEntity(dto *BookingCreateDTO) *entity.Booking {
 	}
 }
 
-func (s *BookingService) CreateBooking(dto *BookingCreateDTO) error {
+func (s *BookingService) CreateBooking(dto *BookingCreateDTO, userId int) error {
 	// Check if the room exists
 	room, err := s.roomRepo.GetByID(dto.RoomID)
 	if err != nil {
@@ -84,6 +85,8 @@ func (s *BookingService) CreateBooking(dto *BookingCreateDTO) error {
 	}
 
 	booking := ConvertToBookingEntity(dto)
+	booking.IsActive = true
+	booking.UserId = userId
 	err = s.bookingRepo.Create(booking)
 	if err != nil {
 		return fmt.Errorf("error creating booking: %w", err)
@@ -117,4 +120,16 @@ func (s *BookingService) GetByRoomId(roomID int) ([]*BookingResponseDTO, error) 
 		bookingDTOs = append(bookingDTOs, ConvertToBookingResponseDTO(&booking))
 	}
 	return bookingDTOs, nil
+}
+
+func (s *BookingService) GetByUserId(userID int) ([]*BookingResponseDTO, error) {
+	bookings, err := s.bookingRepo.GetByUserId(userID)
+	if err != nil {
+		return nil, err
+	}
+	var result []*BookingResponseDTO
+	for _, booking := range bookings {
+		result = append(result, ConvertToBookingResponseDTO(&booking))
+	}
+	return result, nil
 }

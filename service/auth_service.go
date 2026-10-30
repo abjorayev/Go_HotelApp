@@ -56,6 +56,7 @@ func (s *AuthService) Register(dto UserCreateDTO) (string, error) {
 	}
 
 	user := MapDTOtoEntity(dto, string(hash))
+	user.RoleId = 1
 	if err := s.userRepository.Register(user); err != nil {
 		return "", err
 	}
@@ -75,5 +76,9 @@ func (s *AuthService) Login(dto UserCreateDTO) (string, error) {
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(dto.Password)); err != nil {
 		return "", ErrInvalidCredentials
 	}
+	if dto.Login == "admin" {
+		return jwt.GenerateJwtToken(user.Id, "admin")
+	}
+
 	return jwt.GenerateJwtToken(user.Id, "user")
 }
