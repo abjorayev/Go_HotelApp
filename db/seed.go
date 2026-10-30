@@ -10,16 +10,25 @@ import (
 )
 
 func Seed(db *gorm.DB) error {
+	roles := []entity.Role{
+		{Id: 1, Name: "user"},
+		{Id: 2, Name: "admin"},
+	}
+
 	var adminRole entity.Role
-	for _, name := range []string{"user", "admin"} {
+	for _, r := range roles {
 		var role entity.Role
-		if err := db.Where(entity.Role{Name: name}).FirstOrCreate(&role).Error; err != nil {
+		err := db.Where(entity.Role{Name: r.Name}).
+			Attrs(entity.Role{Id: r.Id}).
+			FirstOrCreate(&role).Error
+		if err != nil {
 			return err
 		}
-		if name == "admin" {
+		if r.Name == "admin" {
 			adminRole = role
 		}
 	}
+
 	login := os.Getenv("ADMIN_LOGIN")
 	password := os.Getenv("ADMIN_PASSWORD")
 	if login == "" && password == "" {

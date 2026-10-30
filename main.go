@@ -66,15 +66,17 @@ func main() {
 			rooms.GET("/GetRoomsByHotelID/:id", roomHandler.GetByHotelId)
 			rooms.GET("/GetRoomsByID/:id", roomHandler.GetRoomById)
 			rooms.POST("/CreateRoom", auth, admin, roomHandler.CreateRoom)
-			rooms.PUT("/UpdateRoom", auth, admin, roomHandler.UpdateRoom)
+			rooms.PUT("/UpdateRoom/:id", auth, admin, roomHandler.UpdateRoom)
 			rooms.DELETE("/DeleteRoom/:id", auth, admin, roomHandler.DeleteRoom)
+
 		}
 		bookings := api.Group("/bookings")
 		{
-			bookings.GET("/GetBookingById/:id", bookingHandler.GetByBookingId)
-			bookings.GET("/GetBookingsByRoomId/:id", bookingHandler.GetByRoomid)
+			bookings.GET("/GetBookingById/:id", auth, bookingHandler.GetByBookingId)
+			bookings.GET("/GetBookingsByRoomId/:id", auth, admin, bookingHandler.GetByRoomid)
+			bookings.GET("/GetBookingsByUserId/:id", auth, bookingHandler.GetByUserId)
 			bookings.POST("/CreateBooking", auth, bookingHandler.CreateBooking)
-			bookings.DELETE("/DeleteBooking", auth, bookingHandler.DeleteBooking)
+			bookings.DELETE("/DeleteBooking/:id", auth, bookingHandler.DeleteBooking)
 		}
 		auth := api.Group("/auth")
 		{

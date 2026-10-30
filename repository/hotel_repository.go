@@ -28,7 +28,7 @@ func NewHotelRepository(db *gorm.DB) IHotelRepository {
 
 func (r *HotelRepository) GetAll() ([]entity.Hotel, error) {
 	var hotels []entity.Hotel
-	result := r.db.Find(&hotels)
+	result := r.db.Where("is_active", true).Find(&hotels)
 	return hotels, result.Error
 }
 

@@ -4,10 +4,16 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 
-	"github.com/dgrijalva/jwt-go"
 	"github.com/gin-gonic/gin"
+	"github.com/golang-jwt/jwt/v5"
+)
+
+const (
+	CtxUserID = "user_id"
+	CtxRole   = "role"
 )
 
 func AuthMiddleware() gin.HandlerFunc {
@@ -38,22 +44,32 @@ func AuthMiddleware() gin.HandlerFunc {
 			return
 		}
 
-		userID, ok := claims["sub"].(string)
-		if !ok || userID == "" {
+		sub, ok := claims["sub"].(string)
+		if !ok || sub == "" {
+			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid subject"})
+			return
+		}
+		userID, err := strconv.Atoi(sub)
+		if err != nil || userID <= 0 {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "invalid subject"})
 			return
 		}
 
 		role, _ := claims["role"].(string)
-		c.Set("role", role)
-		c.Set("user_id", userID)
+		c.Set(CtxUserID, userID) // int, а не string
+		c.Set(CtxRole, role)
 		c.Next()
 	}
 }
 
+func CurrentUserID(c *gin.Context) (int, bool) {
+	id := c.GetInt(CtxUserID)
+	return id, id != 0
+}
+
 func RequireRole(roles ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		role := c.GetString("role")
+		role := c.GetString(CtxRole)
 		for _, r := range roles {
 			if role == r {
 				c.Next()
