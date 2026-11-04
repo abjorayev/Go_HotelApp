@@ -14,15 +14,20 @@ import (
 var (
 	ErrLoginTaken         = errors.New("login already taken")
 	ErrInvalidCredentials = errors.New("invalid credentials")
+	LoginNotFoundError    = errors.New("login not found")
+	RoleNotFoundError     = errors.New("role not found")
+	UserNotFoundError     = errors.New("user not found")
 )
 
 type IAuthService interface {
 	Register(dto UserCreateDTO) (string, error)
 	Login(dto UserCreateDTO) (string, error)
+	SetRole(userID int, roleID int) error
 }
 
 type AuthService struct {
 	userRepository repository.IUserRepository
+	roleRepository repository.IRoleRepository
 }
 
 type UserCreateDTO struct {
@@ -37,8 +42,11 @@ func MapDTOtoEntity(dto UserCreateDTO, hashedPassword string) *entity.User {
 	}
 }
 
-func NewAuthService(userRepository repository.IUserRepository) IAuthService {
-	return &AuthService{userRepository: userRepository}
+func NewAuthService(userRepository repository.IUserRepository, roleRepository repository.IRoleRepository) IAuthService {
+	return &AuthService{
+		userRepository: userRepository,
+		roleRepository: roleRepository,
+	}
 }
 
 func (s *AuthService) Register(dto UserCreateDTO) (string, error) {
@@ -56,7 +64,11 @@ func (s *AuthService) Register(dto UserCreateDTO) (string, error) {
 	}
 
 	user := MapDTOtoEntity(dto, string(hash))
-	user.RoleId = 1
+	role, err := s.roleRepository.GetByName("user")
+	if err != nil {
+		return "", err
+	}
+	user.RoleId = role.Id
 	if err := s.userRepository.Register(user); err != nil {
 		return "", err
 	}
@@ -70,7 +82,7 @@ func (s *AuthService) Login(dto UserCreateDTO) (string, error) {
 		return "", err
 	}
 	if user == nil {
-		return "", nil
+		return "", LoginNotFoundError
 	}
 
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(dto.Password)); err != nil {
@@ -81,4 +93,27 @@ func (s *AuthService) Login(dto UserCreateDTO) (string, error) {
 	}
 
 	return jwt.GenerateJwtToken(user.Id, "user")
+}
+
+func (s *AuthService) SetRole(userID int, roleID int) error {
+	role, err := s.roleRepository.GetById(roleID)
+	if err != nil {
+		return err
+	}
+	if role == nil {
+		return RoleNotFoundError
+	}
+	user, err := s.userRepository.GetById(userID)
+	if err != nil {
+		return err
+	}
+	if user == nil {
+		return UserNotFoundError
+	}
+	err = s.userRepository.SetRole(userID, roleID)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

@@ -20,6 +20,10 @@ type IBookingService interface {
 	GetByUserId(userId int) ([]*BookingResponseDTO, error)
 }
 
+var (
+	BookingNotFoundError = fmt.Errorf("booking not found")
+)
+
 func NewBookingService(bookingRepo repository.IBookingRepository, roomRepo repository.IRoomRepository) IBookingService {
 	return &BookingService{
 		bookingRepo: bookingRepo,
@@ -40,6 +44,7 @@ type BookingResponseDTO struct {
 	StartDate     time.Time `json:"start_date"`
 	EndDate       time.Time `json:"end_date"`
 	CountOfGuests int       `json:"count_of_guests"`
+	Price         int       `json:"price"`
 }
 
 func ConvertToBookingResponseDTO(booking *entity.Booking) *BookingResponseDTO {
@@ -49,6 +54,7 @@ func ConvertToBookingResponseDTO(booking *entity.Booking) *BookingResponseDTO {
 		StartDate:     booking.StartDate,
 		EndDate:       booking.EndDate,
 		CountOfGuests: booking.CountOfGuests,
+		Price:         booking.Price,
 	}
 }
 
@@ -71,6 +77,17 @@ func (s *BookingService) CreateBooking(dto *BookingCreateDTO, userId int) error 
 		return fmt.Errorf("room with ID %d not found", dto.RoomID)
 	}
 
+	if dto.StartDate.After(dto.EndDate) {
+		return fmt.Errorf("start date cannot be after end date")
+	}
+	if dto.CountOfGuests <= 0 {
+		return fmt.Errorf("count of guests must be greater than zero")
+	}
+
+	if room.IsActive == false {
+		return fmt.Errorf("room with ID %d is not active", dto.RoomID)
+	}
+
 	if room.CountOfGuests < dto.CountOfGuests {
 		return fmt.Errorf("room with ID %d cannot accommodate %d guests", dto.RoomID, dto.CountOfGuests)
 	}
@@ -83,15 +100,23 @@ func (s *BookingService) CreateBooking(dto *BookingCreateDTO, userId int) error 
 	if !aviable {
 		return fmt.Errorf("room with ID %d is not available from %s to %s", dto.RoomID, dto.StartDate, dto.EndDate)
 	}
-
+	days := nightsBetween(dto.StartDate, dto.EndDate)
+	price := int(float64(days) * room.Price)
 	booking := ConvertToBookingEntity(dto)
 	booking.IsActive = true
 	booking.UserId = userId
+	booking.Price = price
 	err = s.bookingRepo.Create(booking)
 	if err != nil {
 		return fmt.Errorf("error creating booking: %w", err)
 	}
 	return nil
+}
+
+func nightsBetween(start, end time.Time) int {
+	s := time.Date(start.Year(), start.Month(), start.Day(), 0, 0, 0, 0, time.UTC)
+	e := time.Date(end.Year(), end.Month(), end.Day(), 0, 0, 0, 0, time.UTC)
+	return int(e.Sub(s).Hours() / 24)
 }
 
 func (s *BookingService) GetBookingByID(id int) (*BookingResponseDTO, error) {
@@ -103,7 +128,10 @@ func (s *BookingService) GetBookingByID(id int) (*BookingResponseDTO, error) {
 }
 
 func (s *BookingService) DeleteBooking(id int) error {
-	err := s.bookingRepo.Delete(id)
+	booking, err := s.bookingRepo.GetByID(id)
+	booking.IsActive = false
+	err = s.bookingRepo.Update(booking)
+	//err := s.bookingRepo.Delete(id)
 	if err != nil {
 		return fmt.Errorf("error deleting booking: %w", err)
 	}

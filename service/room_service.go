@@ -1,20 +1,27 @@
 package service
 
 import (
+	"fmt"
 	"hotel_app/repository"
 
 	"hotel_app/entity"
 )
 
 type RoomService struct {
-	roomRepository repository.IRoomRepository
+	roomRepository  repository.IRoomRepository
+	hotelRepository repository.IHotelRepository
 }
 
-func NewRoomService(roomRepository repository.IRoomRepository) IRoomService {
+func NewRoomService(roomRepository repository.IRoomRepository, hotelRepository repository.IHotelRepository) IRoomService {
 	return &RoomService{
-		roomRepository: roomRepository,
+		roomRepository:  roomRepository,
+		hotelRepository: hotelRepository,
 	}
 }
+
+var (
+	HotelNotFoundError = fmt.Errorf("hotel not found")
+)
 
 type RoomCreateDTO struct {
 	HotelID       int     `json:"hotel_id" binding:"required"`
@@ -37,8 +44,8 @@ type RoomResponseDTO struct {
 
 type IRoomService interface {
 	CreateRoom(dto *RoomCreateDTO) error
-	UpdateRoom(id int, dto *RoomCreateDTO) error
-	DeleteRoom(id int) error
+	UpdateRoom(id int, dto *RoomCreateDTO, managerId int, role string) error
+	DeleteRoom(id int, managerId int, role string) error
 	GetById(id int) (*RoomResponseDTO, error)
 	GetByHotelID(hotelID int) ([]RoomResponseDTO, error)
 }
@@ -66,15 +73,44 @@ func MapRoomToResponseDTO(room *entity.Room) RoomResponseDTO {
 	}
 }
 
+func (s *RoomService) IsCurrentHotelManager(userId int, hotelId int, role string) (bool, error) {
+	hotel, err := s.hotelRepository.GetByID(hotelId)
+	if err != nil {
+		return false, err
+	}
+	if hotel == nil {
+		return false, HotelNotFoundError
+	}
+	if role == "admin" {
+		return true, nil
+	}
+	return hotel.ManagerID == userId, nil
+}
+
 func (s *RoomService) CreateRoom(dto *RoomCreateDTO) error {
+	hotel, err := s.hotelRepository.GetByID(dto.HotelID)
+	if err != nil {
+		return err
+	}
+	if hotel == nil {
+		return HotelNotFoundError
+	}
+
 	room := MapCreateDTOToRoom(dto)
 	return s.roomRepository.Create(&room)
 }
 
-func (s *RoomService) UpdateRoom(id int, dto *RoomCreateDTO) error {
+func (s *RoomService) UpdateRoom(id int, dto *RoomCreateDTO, managerId int, role string) error {
 	room, err := s.roomRepository.GetByID(id)
 	if err != nil {
 		return err
+	}
+	isManager, err := s.IsCurrentHotelManager(managerId, room.HotelID, role)
+	if err != nil {
+		return err
+	}
+	if !isManager {
+		return fmt.Errorf("user is not the manager of the hotel")
 	}
 	//roomEntity := MapCreateDTOToRoom(dto)
 	//roomEntity.ID = room.ID
@@ -87,8 +123,20 @@ func (s *RoomService) UpdateRoom(id int, dto *RoomCreateDTO) error {
 	return s.roomRepository.Update(room)
 }
 
-func (s *RoomService) DeleteRoom(id int) error {
-	return s.roomRepository.Delete(id)
+func (s *RoomService) DeleteRoom(id int, managerId int, role string) error {
+	room, err := s.roomRepository.GetByID(id)
+	if err != nil {
+		return err
+	}
+	isManager, err := s.IsCurrentHotelManager(managerId, room.HotelID, role)
+	if err != nil {
+		return err
+	}
+	if !isManager {
+		return fmt.Errorf("user is not the manager of the hotel")
+	}
+	room.IsActive = false
+	return s.roomRepository.Update(room)
 }
 
 func (s *RoomService) GetById(id int) (*RoomResponseDTO, error) {

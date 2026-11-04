@@ -13,6 +13,7 @@ func Seed(db *gorm.DB) error {
 	roles := []entity.Role{
 		{Id: 1, Name: "user"},
 		{Id: 2, Name: "admin"},
+		{Id: 3, Name: "manager"},
 	}
 
 	var adminRole entity.Role
