@@ -8,6 +8,7 @@ type Booking struct {
 	EndDate       time.Time
 	CountOfGuests int
 	IsActive      bool
+	Price         int
 	RoomID        int
 	Room          Room `gorm:"foreignKey:RoomID"`
 	UserId        int

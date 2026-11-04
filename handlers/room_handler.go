@@ -1,10 +1,13 @@
 package handlers
 
 import (
+	"errors"
 	"hotel_app/service"
 
 	"net/http"
 	"strconv"
+
+	"hotel_app/middleware"
 
 	"github.com/gin-gonic/gin"
 )
@@ -57,6 +60,10 @@ func (h *RoomHandler) CreateRoom(c *gin.Context) {
 	}
 
 	if err := h.roomService.CreateRoom(&newRoom); err != nil {
+		if errors.Is(err, service.HotelNotFoundError) {
+			c.JSON(404, gin.H{"error": "hotel not found"})
+			return
+		}
 		c.JSON(500, gin.H{"error": err.Error()})
 		return
 	}
@@ -76,8 +83,13 @@ func (h *RoomHandler) UpdateRoom(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
-
-	if err := h.roomService.UpdateRoom(id, &roomUpdate); err != nil {
+	userID, ok := middleware.CurrentUserID(c)
+	role, ok := middleware.CurrentUserRole(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	if err := h.roomService.UpdateRoom(id, &roomUpdate, userID, role); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -91,7 +103,17 @@ func (h *RoomHandler) DeleteRoom(c *gin.Context) {
 		return
 	}
 
-	if err := h.roomService.DeleteRoom(id); err != nil {
+	userID, ok := middleware.CurrentUserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	role, ok := middleware.CurrentUserRole(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	if err := h.roomService.DeleteRoom(id, userID, role); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}

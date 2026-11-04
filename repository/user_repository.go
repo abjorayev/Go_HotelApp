@@ -13,6 +13,8 @@ type UserRepository struct {
 type IUserRepository interface {
 	Register(user *entity.User) error
 	GetByLogin(login string) (*entity.User, error)
+	SetRole(userID int, roleID int) error
+	GetById(id int) (*entity.User, error)
 }
 
 func NewUserRepository(db *gorm.DB) IUserRepository {
@@ -32,4 +34,23 @@ func (r *UserRepository) GetByLogin(login string) (*entity.User, error) {
 		return nil, err
 	}
 	return &user, nil
+}
+
+func (r *UserRepository) GetById(id int) (*entity.User, error) {
+	var user entity.User
+	err := r.db.First(&user, id).Error
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
+
+func (r *UserRepository) SetRole(userID int, roleID int) error {
+	var user entity.User
+	result := r.db.First(&user, userID)
+	if result.Error != nil {
+		return result.Error
+	}
+	user.RoleId = roleID
+	return r.db.Save(&user).Error
 }

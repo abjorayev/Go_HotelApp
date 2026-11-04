@@ -67,7 +67,12 @@ func CurrentUserID(c *gin.Context) (int, bool) {
 	return id, id != 0
 }
 
-func RequireRole(roles ...string) gin.HandlerFunc {
+func CurrentUserRole(c *gin.Context) (string, bool) {
+	role, exists := c.Get(CtxRole)
+	return role.(string), exists
+}
+
+func RequireRoles(roles ...string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		role := c.GetString(CtxRole)
 		for _, r := range roles {
@@ -77,5 +82,16 @@ func RequireRole(roles ...string) gin.HandlerFunc {
 			}
 		}
 		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "forbidden"})
+	}
+}
+
+func RequireOneRole(role string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userRole := c.GetString(CtxRole)
+		if userRole != role {
+			c.AbortWithStatusJSON(http.StatusForbidden, gin.H{"error": "forbidden"})
+			return
+		}
+		c.Next()
 	}
 }

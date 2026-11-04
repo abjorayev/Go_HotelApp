@@ -39,7 +39,7 @@ func main() {
 	hotelHandler := handlers.NewHotelHandler(hotelService)
 	//Rooms
 	roomRepo := repository.NewRoomRepository(database)
-	roomService := service.NewRoomService(roomRepo)
+	roomService := service.NewRoomService(roomRepo, hotelRepo)
 	roomHandler := handlers.NewRoomHandler(roomService)
 	//Bookings
 	bookingRepo := repository.NewBookingRepository(database)
@@ -47,10 +47,12 @@ func main() {
 	bookingHandler := handlers.NewBookingHandler(bookingService)
 	//Auth
 	authRepo := repository.NewUserRepository(database)
-	authService := service.NewAuthService(authRepo)
+	roleRepo := repository.NewRoleRepository(database)
+	authService := service.NewAuthService(authRepo, roleRepo)
 	authHandler := handlers.NewAuthHandler(authService)
 	auth := middleware.AuthMiddleware()
-	admin := middleware.RequireRole("admin")
+	roles := middleware.RequireRoles("admin", "manager")
+	admin := middleware.RequireRoles("admin")
 	api := r.Group("/api/v1")
 	{
 		hotels := api.Group("/hotels")
@@ -65,23 +67,24 @@ func main() {
 		{
 			rooms.GET("/GetRoomsByHotelID/:id", roomHandler.GetByHotelId)
 			rooms.GET("/GetRoomsByID/:id", roomHandler.GetRoomById)
-			rooms.POST("/CreateRoom", auth, admin, roomHandler.CreateRoom)
-			rooms.PUT("/UpdateRoom/:id", auth, admin, roomHandler.UpdateRoom)
-			rooms.DELETE("/DeleteRoom/:id", auth, admin, roomHandler.DeleteRoom)
+			rooms.POST("/CreateRoom", auth, roles, roomHandler.CreateRoom)
+			rooms.PUT("/UpdateRoom/:id", auth, roles, roomHandler.UpdateRoom)
+			rooms.DELETE("/DeleteRoom/:id", auth, roles, roomHandler.DeleteRoom)
 
 		}
 		bookings := api.Group("/bookings")
 		{
 			bookings.GET("/GetBookingById/:id", auth, bookingHandler.GetByBookingId)
-			bookings.GET("/GetBookingsByRoomId/:id", auth, admin, bookingHandler.GetByRoomid)
+			bookings.GET("/GetBookingsByRoomId/:id", auth, roles, bookingHandler.GetByRoomid)
 			bookings.GET("/GetBookingsByUserId/:id", auth, bookingHandler.GetByUserId)
 			bookings.POST("/CreateBooking", auth, bookingHandler.CreateBooking)
 			bookings.DELETE("/DeleteBooking/:id", auth, bookingHandler.DeleteBooking)
 		}
-		auth := api.Group("/auth")
+		authH := api.Group("/auth")
 		{
-			auth.POST("/register", authHandler.Register)
-			auth.POST("/login", authHandler.Login)
+			authH.POST("/register", authHandler.Register)
+			authH.POST("/login", authHandler.Login)
+			authH.POST("/set-role", auth, admin, authHandler.SetRole)
 		}
 	}
 
