@@ -45,6 +45,10 @@ func main() {
 	bookingRepo := repository.NewBookingRepository(database)
 	bookingService := service.NewBookingService(bookingRepo, roomRepo)
 	bookingHandler := handlers.NewBookingHandler(bookingService)
+	//Ratings
+	hotelRatingRepo := repository.NewHotelRatingRepository(database)
+	hotelRatingService := service.NewHotelRatingService(hotelRatingRepo, bookingService, hotelRepo)
+	hotelRatingHandler := handlers.NewHotelRatingHandler(hotelRatingService)
 	//Auth
 	authRepo := repository.NewUserRepository(database)
 	roleRepo := repository.NewRoleRepository(database)
@@ -79,12 +83,18 @@ func main() {
 			bookings.GET("/GetBookingsByUserId/:id", auth, bookingHandler.GetByUserId)
 			bookings.POST("/CreateBooking", auth, bookingHandler.CreateBooking)
 			bookings.DELETE("/DeleteBooking/:id", auth, bookingHandler.DeleteBooking)
+			bookings.PUT("/CancelBooking/:id", auth, bookingHandler.CancelBooking)
 		}
 		authH := api.Group("/auth")
 		{
 			authH.POST("/register", authHandler.Register)
 			authH.POST("/login", authHandler.Login)
 			authH.POST("/set-role", auth, admin, authHandler.SetRole)
+		}
+		ratings := api.Group("/ratings")
+		{
+			ratings.POST("/CreateRating", auth, hotelRatingHandler.CreateRating)
+			ratings.GET("/GetAverageRatingByHotel/:id", hotelRatingHandler.GetAverageRatingByHotel)
 		}
 	}
 

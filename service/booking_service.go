@@ -18,10 +18,13 @@ type IBookingService interface {
 	DeleteBooking(id int) error
 	GetByRoomId(roomID int) ([]*BookingResponseDTO, error)
 	GetByUserId(userId int) ([]*BookingResponseDTO, error)
+	CancelBooking(id int, userId int) error
+	CheckIfUserBookedInThisHotel(userId int, hotelId int) (bool, error)
 }
 
 var (
-	BookingNotFoundError = fmt.Errorf("booking not found")
+	BookingNotFoundError   = fmt.Errorf("booking not found")
+	UserNotAuthorizedError = fmt.Errorf("user not authorized to cancel this booking")
 )
 
 func NewBookingService(bookingRepo repository.IBookingRepository, roomRepo repository.IRoomRepository) IBookingService {
@@ -67,6 +70,10 @@ func ConvertToBookingEntity(dto *BookingCreateDTO) *entity.Booking {
 	}
 }
 
+func (s *BookingService) CheckIfUserBookedInThisHotel(userId int, hotelId int) (bool, error) {
+	return s.bookingRepo.CheckIfUserBookedInThisHotel(userId, hotelId)
+}
+
 func (s *BookingService) CreateBooking(dto *BookingCreateDTO, userId int) error {
 	// Check if the room exists
 	room, err := s.roomRepo.GetByID(dto.RoomID)
@@ -106,6 +113,8 @@ func (s *BookingService) CreateBooking(dto *BookingCreateDTO, userId int) error 
 	booking.IsActive = true
 	booking.UserId = userId
 	booking.Price = price
+	booking.BookingStatus = entity.BookingStatusBooked
+	booking.HotelID = room.HotelID
 	err = s.bookingRepo.Create(booking)
 	if err != nil {
 		return fmt.Errorf("error creating booking: %w", err)
@@ -160,4 +169,23 @@ func (s *BookingService) GetByUserId(userID int) ([]*BookingResponseDTO, error) 
 		result = append(result, ConvertToBookingResponseDTO(&booking))
 	}
 	return result, nil
+}
+
+func (s *BookingService) CancelBooking(id int, userId int) error {
+	booking, err := s.bookingRepo.GetByID(id)
+	if err != nil {
+		return err
+	}
+	if booking == nil {
+		return BookingNotFoundError
+	}
+	if booking.UserId != userId {
+		return UserNotAuthorizedError
+	}
+	booking.BookingStatus = entity.BookingStatusCancelled
+	err = s.bookingRepo.Update(booking)
+	if err != nil {
+		return fmt.Errorf("error cancelling booking: %w", err)
+	}
+	return nil
 }
