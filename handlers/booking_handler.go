@@ -37,6 +37,26 @@ func (h *BookingHandler) CreateBooking(c *gin.Context) {
 	c.JSON(200, gin.H{"message": "Booking created successfully"})
 }
 
+func (h *BookingHandler) CancelBooking(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		return
+	}
+	userId, ok := middleware.CurrentUserID(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	err = h.bookingService.CancelBooking(id, userId)
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(200, gin.H{"message": "Booking cancelled successfully"})
+
+}
+
 func (h *BookingHandler) GetByBookingId(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {

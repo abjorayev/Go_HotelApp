@@ -19,6 +19,7 @@ type IBookingRepository interface {
 	Delete(id int) error
 	CheckAvailability(roomID int, startDate, endDate time.Time) (bool, error)
 	GetByUserId(userId int) ([]entity.Booking, error)
+	CheckIfUserBookedInThisHotel(userId int, hotelId int) (bool, error)
 }
 
 func NewBookingRepository(db *gorm.DB) IBookingRepository {
@@ -73,6 +74,7 @@ func (r *BookingRepository) CheckAvailability(
 		WHERE room_id = ?
 		  AND start_date < ?
 		  AND end_date > ?
+		  AND status = 2
 	`,
 		roomID,
 		endDate,
@@ -84,4 +86,21 @@ func (r *BookingRepository) CheckAvailability(
 	}
 
 	return count == 0, nil
+}
+
+func (r *BookingRepository) CheckIfUserBookedInThisHotel(userId int, hotelId int) (bool, error) {
+	var count int64
+	err := r.db.Raw(`
+		SELECT COUNT(*)
+		FROM bookings
+		WHERE user_id = ?
+		  AND hotel_id = ?
+		  AND status = 2
+	`, userId, hotelId).Scan(&count).Error
+
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
 }
