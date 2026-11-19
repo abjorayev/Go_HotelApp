@@ -15,10 +15,9 @@ type BookingService struct {
 type IBookingService interface {
 	CreateBooking(dto *BookingCreateDTO, userId int) error
 	GetBookingByID(id int) (*BookingResponseDTO, error)
-	DeleteBooking(id int) error
+	DeleteBooking(id int, userId int, role string) error
 	GetByRoomId(roomID int) ([]*BookingResponseDTO, error)
-	GetByUserId(userId int) ([]*BookingResponseDTO, error)
-	CancelBooking(id int, userId int) error
+	GetByUserId(userId int, page int, rows int) ([]*BookingResponseDTO, error)
 	CheckIfUserBookedInThisHotel(userId int, hotelId int) (bool, error)
 }
 
@@ -136,13 +135,22 @@ func (s *BookingService) GetBookingByID(id int) (*BookingResponseDTO, error) {
 	return ConvertToBookingResponseDTO(booking), nil
 }
 
-func (s *BookingService) DeleteBooking(id int) error {
+func (s *BookingService) DeleteBooking(id int, userId int, role string) error {
 	booking, err := s.bookingRepo.GetByID(id)
+	if err != nil {
+		return err
+	}
+	if booking == nil {
+		return BookingNotFoundError
+	}
+	if booking.UserId != userId || role != "admin" {
+		return UserNotAuthorizedError
+	}
+	booking.BookingStatus = entity.BookingStatusCancelled
 	booking.IsActive = false
 	err = s.bookingRepo.Update(booking)
-	//err := s.bookingRepo.Delete(id)
 	if err != nil {
-		return fmt.Errorf("error deleting booking: %w", err)
+		return fmt.Errorf("error cancelling booking: %w", err)
 	}
 	return nil
 }
@@ -159,8 +167,8 @@ func (s *BookingService) GetByRoomId(roomID int) ([]*BookingResponseDTO, error) 
 	return bookingDTOs, nil
 }
 
-func (s *BookingService) GetByUserId(userID int) ([]*BookingResponseDTO, error) {
-	bookings, err := s.bookingRepo.GetByUserId(userID)
+func (s *BookingService) GetByUserId(userID int, page int, rows int) ([]*BookingResponseDTO, error) {
+	bookings, err := s.bookingRepo.GetByUserId(userID, page, rows)
 	if err != nil {
 		return nil, err
 	}
@@ -169,23 +177,4 @@ func (s *BookingService) GetByUserId(userID int) ([]*BookingResponseDTO, error) 
 		result = append(result, ConvertToBookingResponseDTO(&booking))
 	}
 	return result, nil
-}
-
-func (s *BookingService) CancelBooking(id int, userId int) error {
-	booking, err := s.bookingRepo.GetByID(id)
-	if err != nil {
-		return err
-	}
-	if booking == nil {
-		return BookingNotFoundError
-	}
-	if booking.UserId != userId {
-		return UserNotAuthorizedError
-	}
-	booking.BookingStatus = entity.BookingStatusCancelled
-	err = s.bookingRepo.Update(booking)
-	if err != nil {
-		return fmt.Errorf("error cancelling booking: %w", err)
-	}
-	return nil
 }

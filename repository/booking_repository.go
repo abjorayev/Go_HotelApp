@@ -18,7 +18,7 @@ type IBookingRepository interface {
 	Update(booking *entity.Booking) error
 	Delete(id int) error
 	CheckAvailability(roomID int, startDate, endDate time.Time) (bool, error)
-	GetByUserId(userId int) ([]entity.Booking, error)
+	GetByUserId(userId int, page int, rows int) ([]entity.Booking, error)
 	CheckIfUserBookedInThisHotel(userId int, hotelId int) (bool, error)
 }
 
@@ -45,10 +45,18 @@ func (r *BookingRepository) GetByRoomID(roomID int) ([]entity.Booking, error) {
 	return bookings, result.Error
 }
 
-func (r *BookingRepository) GetByUserId(userId int) ([]entity.Booking, error) {
+func (r *BookingRepository) GetByUserId(userId int, page int, rows int) ([]entity.Booking, error) {
 	var bookings []entity.Booking
-	result := r.db.Where("user_id = ?", userId).Find(&bookings)
-	return bookings, result.Error
+	//result := r.db.Where("user_id = ?", userId).Find(&bookings)
+	err := r.db.Raw(`
+		SELECT *
+		FROM bookings
+		WHERE user_id = ?
+		ORDER BY start_date DESC
+		LIMIT ? OFFSET ?
+	`, userId, rows, (page-1)*rows).Scan(&bookings).Error
+
+	return bookings, err
 }
 
 func (r *BookingRepository) Update(booking *entity.Booking) error {
@@ -74,7 +82,7 @@ func (r *BookingRepository) CheckAvailability(
 		WHERE room_id = ?
 		  AND start_date < ?
 		  AND end_date > ?
-		  AND status = 2
+		  AND booking_status = 2
 	`,
 		roomID,
 		endDate,
@@ -104,3 +112,4 @@ func (r *BookingRepository) CheckIfUserBookedInThisHotel(userId int, hotelId int
 
 	return count > 0, nil
 }
+
