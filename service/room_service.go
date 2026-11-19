@@ -21,6 +21,7 @@ func NewRoomService(roomRepository repository.IRoomRepository, hotelRepository r
 
 var (
 	HotelNotFoundError = fmt.Errorf("hotel not found")
+	RoomNotFoundError  = fmt.Errorf("Room not found")
 )
 
 type RoomCreateDTO struct {

@@ -88,11 +88,15 @@ func (s *AuthService) Login(dto UserCreateDTO) (string, error) {
 	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(dto.Password)); err != nil {
 		return "", ErrInvalidCredentials
 	}
-	if dto.Login == "admin" {
-		return jwt.GenerateJwtToken(user.Id, "admin")
+	roleName, err := s.userRepository.GetRoleByUserName(dto.Login)
+	if err != nil {
+		return "", err
+	}
+	if roleName == "" {
+		return "", RoleNotFoundError
 	}
 
-	return jwt.GenerateJwtToken(user.Id, "user")
+	return jwt.GenerateJwtToken(user.Id, roleName)
 }
 
 func (s *AuthService) SetRole(userID int, roleID int) error {

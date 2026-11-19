@@ -15,6 +15,7 @@ type IUserRepository interface {
 	GetByLogin(login string) (*entity.User, error)
 	SetRole(userID int, roleID int) error
 	GetById(id int) (*entity.User, error)
+	GetRoleByUserName(userName string) (string, error)
 }
 
 func NewUserRepository(db *gorm.DB) IUserRepository {
@@ -53,4 +54,22 @@ func (r *UserRepository) SetRole(userID int, roleID int) error {
 	}
 	user.RoleId = roleID
 	return r.db.Save(&user).Error
+}
+
+func (r *UserRepository) GetRoleByUserName(userName string) (string, error) {
+	var user entity.User
+
+	err := r.db.Where("login = ?", userName).First(&user).Error
+	if err != nil {
+		return "", err
+	}
+
+	var role entity.Role
+
+	err = r.db.Where("id = ?", user.RoleId).First(&role).Error
+	if err != nil {
+		return "", err
+	}
+
+	return role.Name, nil
 }

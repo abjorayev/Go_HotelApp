@@ -17,6 +17,7 @@ type IRoomRepository interface {
 	Update(room *entity.Room) error
 	Delete(id int) error
 	GetByHotelID(hotelID int) ([]entity.Room, error)
+	GetManagerByRoomId(roomId int) (int, error)
 }
 
 func NewRoomRepository(db *gorm.DB) IRoomRepository {
@@ -56,4 +57,18 @@ func (r *RoomRepository) GetByHotelID(hotelID int) ([]entity.Room, error) {
 	var rooms []entity.Room
 	result := r.db.Where("hotel_id = ?", hotelID).Find(&rooms)
 	return rooms, result.Error
+}
+
+func (r *RoomRepository) GetManagerByRoomId(roomId int) (int, error) {
+	var room entity.Room
+	result := r.db.Where("id = ?", roomId).First(&room)
+	if result != nil {
+		return 0, result.Error
+	}
+	var hotel entity.Hotel
+	result = r.db.Where("id = ?", room.HotelID).First(&hotel)
+	if result != nil {
+		return 0, result.Error
+	}
+	return hotel.ManagerID, nil
 }
