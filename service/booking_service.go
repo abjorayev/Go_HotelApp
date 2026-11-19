@@ -14,9 +14,9 @@ type BookingService struct {
 
 type IBookingService interface {
 	CreateBooking(dto *BookingCreateDTO, userId int) error
-	GetBookingByID(id int) (*BookingResponseDTO, error)
-	DeleteBooking(id int, userId int, role string) error
-	GetByRoomId(roomID int) ([]*BookingResponseDTO, error)
+	GetBookingByID(id int, userId int) (*BookingResponseDTO, error)
+	DeleteBooking(id int, userId int) error
+	GetByRoomId(roomID int, userId int, roleName string) ([]*BookingResponseDTO, error)
 	GetByUserId(userId int, page int, rows int) ([]*BookingResponseDTO, error)
 	CheckIfUserBookedInThisHotel(userId int, hotelId int) (bool, error)
 }
@@ -24,6 +24,8 @@ type IBookingService interface {
 var (
 	BookingNotFoundError   = fmt.Errorf("booking not found")
 	UserNotAuthorizedError = fmt.Errorf("user not authorized to cancel this booking")
+	BookingIsNotYoursError = fmt.Errorf("You can see other people's booking")
+	HotelNotAccessError    = fmt.Errorf("You don't have access to this hotel")
 )
 
 func NewBookingService(bookingRepo repository.IBookingRepository, roomRepo repository.IRoomRepository) IBookingService {
@@ -127,15 +129,18 @@ func nightsBetween(start, end time.Time) int {
 	return int(e.Sub(s).Hours() / 24)
 }
 
-func (s *BookingService) GetBookingByID(id int) (*BookingResponseDTO, error) {
+func (s *BookingService) GetBookingByID(id int, userId int) (*BookingResponseDTO, error) {
 	booking, err := s.bookingRepo.GetByID(id)
 	if err != nil {
 		return nil, err
 	}
+	if booking.UserId != userId {
+		return nil, BookingIsNotYoursError
+	}
 	return ConvertToBookingResponseDTO(booking), nil
 }
 
-func (s *BookingService) DeleteBooking(id int, userId int, role string) error {
+func (s *BookingService) DeleteBooking(id int, userId int) error {
 	booking, err := s.bookingRepo.GetByID(id)
 	if err != nil {
 		return err
@@ -143,7 +148,7 @@ func (s *BookingService) DeleteBooking(id int, userId int, role string) error {
 	if booking == nil {
 		return BookingNotFoundError
 	}
-	if booking.UserId != userId || role != "admin" {
+	if booking.UserId != userId {
 		return UserNotAuthorizedError
 	}
 	booking.BookingStatus = entity.BookingStatusCancelled
@@ -155,10 +160,17 @@ func (s *BookingService) DeleteBooking(id int, userId int, role string) error {
 	return nil
 }
 
-func (s *BookingService) GetByRoomId(roomID int) ([]*BookingResponseDTO, error) {
+func (s *BookingService) GetByRoomId(roomID int, userId int, roleName string) ([]*BookingResponseDTO, error) {
 	bookings, err := s.bookingRepo.GetByRoomID(roomID)
 	if err != nil {
 		return nil, err
+	}
+	managerId, err := s.roomRepo.GetManagerByRoomId(roomID)
+	if err != nil {
+		return nil, err
+	}
+	if managerId != userId && roleName != "admin" {
+		return nil, HotelNotAccessError
 	}
 	var bookingDTOs []*BookingResponseDTO
 	for _, booking := range bookings {
