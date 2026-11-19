@@ -71,6 +71,7 @@ func main() {
 		{
 			rooms.GET("/GetRoomsByHotelID/:id", roomHandler.GetByHotelId)
 			rooms.GET("/GetRoomsByID/:id", roomHandler.GetRoomById)
+
 			rooms.POST("/CreateRoom", auth, roles, roomHandler.CreateRoom)
 			rooms.PUT("/UpdateRoom/:id", auth, roles, roomHandler.UpdateRoom)
 			rooms.DELETE("/DeleteRoom/:id", auth, roles, roomHandler.DeleteRoom)
@@ -80,10 +81,10 @@ func main() {
 		{
 			bookings.GET("/GetBookingById/:id", auth, bookingHandler.GetByBookingId)
 			bookings.GET("/GetBookingsByRoomId/:id", auth, roles, bookingHandler.GetByRoomid)
-			bookings.GET("/GetBookingsByUserId/:id", auth, bookingHandler.GetByUserId)
+			bookings.GET("/GetBookingsByUserId/", auth, bookingHandler.GetByUserId)
 			bookings.POST("/CreateBooking", auth, bookingHandler.CreateBooking)
 			bookings.DELETE("/DeleteBooking/:id", auth, bookingHandler.DeleteBooking)
-			bookings.PUT("/CancelBooking/:id", auth, bookingHandler.CancelBooking)
+			///bookings.PUT("/CancelBooking/:id", auth, bookingHandler.CancelBooking)
 		}
 		authH := api.Group("/auth")
 		{

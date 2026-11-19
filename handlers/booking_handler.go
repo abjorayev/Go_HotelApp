@@ -37,26 +37,6 @@ func (h *BookingHandler) CreateBooking(c *gin.Context) {
 	c.JSON(200, gin.H{"message": "Booking created successfully"})
 }
 
-func (h *BookingHandler) CancelBooking(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
-		return
-	}
-	userId, ok := middleware.CurrentUserID(c)
-	if !ok {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
-		return
-	}
-	err = h.bookingService.CancelBooking(id, userId)
-	if err != nil {
-		c.JSON(500, gin.H{"error": err.Error()})
-		return
-	}
-	c.JSON(200, gin.H{"message": "Booking cancelled successfully"})
-
-}
-
 func (h *BookingHandler) GetByBookingId(c *gin.Context) {
 	id, err := strconv.Atoi(c.Param("id"))
 	if err != nil {
@@ -77,8 +57,13 @@ func (h *BookingHandler) DeleteBooking(c *gin.Context) {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
 		return
 	}
-	//err := h.bookingService.DeleteBooking(id)
-	if err := h.bookingService.DeleteBooking(id); err != nil {
+	userId, ok := middleware.CurrentUserID(c)
+	role, ok := middleware.CurrentUserRole(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	if err := h.bookingService.DeleteBooking(id, userId, role); err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
@@ -101,12 +86,25 @@ func (h *BookingHandler) GetByRoomid(c *gin.Context) {
 }
 
 func (h *BookingHandler) GetByUserId(c *gin.Context) {
-	id, err := strconv.Atoi(c.Param("id"))
+	id, err := strconv.Atoi(c.Query("id"))
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
 		return
 	}
-	bookings, err := h.bookingService.GetByUserId(id)
+	pageStr := c.DefaultQuery("page", "1")
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid page number"})
+		return
+	}
+
+	rowsStr := c.DefaultQuery("rows", "10")
+	rows, err := strconv.Atoi(rowsStr)
+	if err != nil || rows <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid rows count"})
+		return
+	}
+	bookings, err := h.bookingService.GetByUserId(id, page, rows)
 	if err != nil {
 		c.JSON(500, gin.H{"error": err.Error()})
 		return
