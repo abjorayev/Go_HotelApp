@@ -103,7 +103,7 @@ func (r *BookingRepository) CheckIfUserBookedInThisHotel(userId int, hotelId int
 		FROM bookings
 		WHERE user_id = ?
 		  AND hotel_id = ?
-		  AND status = 2
+		  AND booking_status = 2
 	`, userId, hotelId).Scan(&count).Error
 
 	if err != nil {
@@ -112,4 +112,3 @@ func (r *BookingRepository) CheckIfUserBookedInThisHotel(userId int, hotelId int
 
 	return count > 0, nil
 }
-

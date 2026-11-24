@@ -1,6 +1,7 @@
 package service
 
 import (
+	"fmt"
 	"hotel_app/entity"
 	"hotel_app/repository"
 )
@@ -34,11 +35,13 @@ type IHotelService interface {
 
 type HotelService struct {
 	hotelRepository repository.IHotelRepository
+	userRepository  repository.IUserRepository
 }
 
-func NewHotelService(hotelRepository repository.IHotelRepository) IHotelService {
+func NewHotelService(hotelRepository repository.IHotelRepository, userRepository repository.IUserRepository) IHotelService {
 	return &HotelService{
 		hotelRepository: hotelRepository,
+		userRepository:  userRepository,
 	}
 }
 
@@ -87,7 +90,21 @@ func (s *HotelService) GetHotelByID(id int) (*HotelResponseDTO, error) {
 
 func (s *HotelService) CreateHotel(dto *HotelCreateDTO) error {
 	hotel := MapCreateDTOToHotel(dto)
-	err := s.hotelRepository.Create(&hotel)
+	if dto.ManagerID == 0 {
+		return fmt.Errorf("ManagerID is required")
+	}
+	user, err := s.userRepository.GetById(dto.ManagerID)
+	if err != nil {
+		return err
+	}
+	if user == nil {
+		return fmt.Errorf("User does not exist")
+	}
+	role, err := s.userRepository.GetRoleByUserName(user.Login)
+	if role != "manager" {
+		return fmt.Errorf("Wrong role or role does not exist")
+	}
+	err = s.hotelRepository.Create(&hotel)
 	if err != nil {
 		return err
 	}

@@ -33,9 +33,15 @@ func main() {
 	}
 
 	fmt.Println("Database connected and migrated!")
+
+	//Auth
+	authRepo := repository.NewUserRepository(database)
+	roleRepo := repository.NewRoleRepository(database)
+	authService := service.NewAuthService(authRepo, roleRepo)
+	authHandler := handlers.NewAuthHandler(authService)
 	//Hotels
 	hotelRepo := repository.NewHotelRepository(database)
-	hotelService := service.NewHotelService(hotelRepo)
+	hotelService := service.NewHotelService(hotelRepo, authRepo)
 	hotelHandler := handlers.NewHotelHandler(hotelService)
 	//Rooms
 	roomRepo := repository.NewRoomRepository(database)
@@ -49,11 +55,7 @@ func main() {
 	hotelRatingRepo := repository.NewHotelRatingRepository(database)
 	hotelRatingService := service.NewHotelRatingService(hotelRatingRepo, bookingService, hotelRepo)
 	hotelRatingHandler := handlers.NewHotelRatingHandler(hotelRatingService)
-	//Auth
-	authRepo := repository.NewUserRepository(database)
-	roleRepo := repository.NewRoleRepository(database)
-	authService := service.NewAuthService(authRepo, roleRepo)
-	authHandler := handlers.NewAuthHandler(authService)
+
 	auth := middleware.AuthMiddleware()
 	roles := middleware.RequireRoles("admin", "manager")
 	admin := middleware.RequireRoles("admin")

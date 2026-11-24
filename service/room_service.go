@@ -22,6 +22,7 @@ func NewRoomService(roomRepository repository.IRoomRepository, hotelRepository r
 var (
 	HotelNotFoundError = fmt.Errorf("hotel not found")
 	RoomNotFoundError  = fmt.Errorf("Room not found")
+	HotelNoAccess      = fmt.Errorf("You don't have access for this hotel")
 )
 
 type RoomCreateDTO struct {
@@ -44,7 +45,7 @@ type RoomResponseDTO struct {
 }
 
 type IRoomService interface {
-	CreateRoom(dto *RoomCreateDTO) error
+	CreateRoom(dto *RoomCreateDTO, managerId int, role string) error
 	UpdateRoom(id int, dto *RoomCreateDTO, managerId int, role string) error
 	DeleteRoom(id int, managerId int, role string) error
 	GetById(id int) (*RoomResponseDTO, error)
@@ -88,7 +89,7 @@ func (s *RoomService) IsCurrentHotelManager(userId int, hotelId int, role string
 	return hotel.ManagerID == userId, nil
 }
 
-func (s *RoomService) CreateRoom(dto *RoomCreateDTO) error {
+func (s *RoomService) CreateRoom(dto *RoomCreateDTO, managerId int, role string) error {
 	hotel, err := s.hotelRepository.GetByID(dto.HotelID)
 	if err != nil {
 		return err
@@ -96,7 +97,9 @@ func (s *RoomService) CreateRoom(dto *RoomCreateDTO) error {
 	if hotel == nil {
 		return HotelNotFoundError
 	}
-
+	if hotel.ManagerID != managerId && role != "admin" {
+		return HotelNoAccess
+	}
 	room := MapCreateDTOToRoom(dto)
 	return s.roomRepository.Create(&room)
 }
@@ -112,6 +115,9 @@ func (s *RoomService) UpdateRoom(id int, dto *RoomCreateDTO, managerId int, role
 	}
 	if !isManager {
 		return fmt.Errorf("user is not the manager of the hotel")
+	}
+	if room.HotelID != dto.HotelID && role != "admin" {
+		return fmt.Errorf("You can't change hotel id")
 	}
 	//roomEntity := MapCreateDTOToRoom(dto)
 	//roomEntity.ID = room.ID

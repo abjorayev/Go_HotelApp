@@ -58,8 +58,13 @@ func (h *RoomHandler) CreateRoom(c *gin.Context) {
 		c.JSON(400, gin.H{"error": err.Error()})
 		return
 	}
-
-	if err := h.roomService.CreateRoom(&newRoom); err != nil {
+	userID, ok := middleware.CurrentUserID(c)
+	role, ok := middleware.CurrentUserRole(c)
+	if !ok {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "unauthorized"})
+		return
+	}
+	if err := h.roomService.CreateRoom(&newRoom, userID, role); err != nil {
 		if errors.Is(err, service.HotelNotFoundError) {
 			c.JSON(404, gin.H{"error": "hotel not found"})
 			return
