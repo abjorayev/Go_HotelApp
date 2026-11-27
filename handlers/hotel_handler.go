@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"hotel_app/service"
+	"strings"
 
 	"net/http"
 	"strconv"
@@ -86,4 +87,39 @@ func (h *HotelHandler) DeleteHotel(c *gin.Context) {
 		return
 	}
 	c.JSON(200, gin.H{"message": "Hotel deleted successfully"})
+}
+
+func (h *HotelHandler) GetHotelsByCity(c *gin.Context) {
+	city := strings.TrimSpace(c.Query("city"))
+	if city == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "city is required"})
+		return
+	}
+
+	hotels, err := h.hotelService.GetHotelsByCity(city)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal error"})
+		return
+	}
+
+	c.JSON(http.StatusOK, hotels)
+}
+
+func (h *HotelHandler) GetHotelsByManagerId(c *gin.Context) {
+	id, err := strconv.Atoi(c.Param("id"))
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "invalid id"})
+		return
+	}
+	hotels, err := h.hotelService.GetHotelsByManagerID(id)
+	if err != nil {
+		c.JSON(500, gin.H{"error": err.Error()})
+		return
+	}
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "internal error"})
+		return
+	}
+
+	c.JSON(http.StatusOK, hotels)
 }

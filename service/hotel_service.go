@@ -154,5 +154,6 @@ func (s *HotelService) GetHotelsByManagerID(managerID int) ([]HotelResponseDTO, 
 	for _, hotel := range hotels {
 		hotelDTOs = append(hotelDTOs, MapHotelToResponseDTO(&hotel))
 	}
+
 	return hotelDTOs, nil
 }

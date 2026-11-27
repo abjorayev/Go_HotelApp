@@ -34,7 +34,7 @@ func (r *HotelRepository) GetAll() ([]entity.Hotel, error) {
 
 func (r *HotelRepository) GetByID(id int) (*entity.Hotel, error) {
 	var hotel entity.Hotel
-	result := r.db.First(&hotel, id)
+	result := r.db.Where("id = ? AND is_active = true", id).First(&hotel)
 	return &hotel, result.Error
 }
 
@@ -55,7 +55,7 @@ func (r *HotelRepository) Delete(id int) error {
 
 func (r *HotelRepository) GetByCity(city string) ([]entity.Hotel, error) {
 	var hotels []entity.Hotel
-	result := r.db.Where("city = ?", city).Find(&hotels)
+	result := r.db.Where("city = ? AND is_active = true", city).Find(&hotels)
 	return hotels, result.Error
 }
 
