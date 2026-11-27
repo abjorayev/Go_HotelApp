@@ -4,5 +4,5 @@ type HotelRating struct {
 	ID      int `json:"id"`
 	HotelID int `json:"hotel_id"`
 	UserID  int `json:"user_id"`
-	Rating  int `json:"rating"`
+	Rating  int `json:"rating" binding:"required,min=1,max=5"`
 }

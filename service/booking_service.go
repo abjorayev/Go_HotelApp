@@ -10,6 +10,7 @@ import (
 type BookingService struct {
 	bookingRepo repository.IBookingRepository
 	roomRepo    repository.IRoomRepository
+	hotelRepo   repository.IHotelRepository
 }
 
 type IBookingService interface {
@@ -28,10 +29,11 @@ var (
 	HotelNotAccessError    = fmt.Errorf("You don't have access to this hotel")
 )
 
-func NewBookingService(bookingRepo repository.IBookingRepository, roomRepo repository.IRoomRepository) IBookingService {
+func NewBookingService(bookingRepo repository.IBookingRepository, roomRepo repository.IRoomRepository, hotelRepo repository.IHotelRepository) IBookingService {
 	return &BookingService{
 		bookingRepo: bookingRepo,
 		roomRepo:    roomRepo,
+		hotelRepo:   hotelRepo,
 	}
 }
 
@@ -84,9 +86,18 @@ func (s *BookingService) CreateBooking(dto *BookingCreateDTO, userId int) error 
 	if room == nil {
 		return fmt.Errorf("room with ID %d not found", dto.RoomID)
 	}
-
-	if dto.StartDate.After(dto.EndDate) {
+	hotel, err := s.hotelRepo.GetByID(room.HotelID)
+	if err != nil {
+		return err
+	}
+	if hotel.IsActive == false {
+		return fmt.Errorf("Hotel is not active")
+	}
+	if nightsBetween(dto.StartDate, dto.EndDate) < 1 {
 		return fmt.Errorf("start date cannot be after end date")
+	}
+	if dto.EndDate.Before(time.Now()) {
+		return fmt.Errorf("time of the booking cannot be before real time")
 	}
 	if dto.CountOfGuests <= 0 {
 		return fmt.Errorf("count of guests must be greater than zero")
@@ -111,7 +122,7 @@ func (s *BookingService) CreateBooking(dto *BookingCreateDTO, userId int) error 
 	days := nightsBetween(dto.StartDate, dto.EndDate)
 	price := int(float64(days) * room.Price)
 	booking := ConvertToBookingEntity(dto)
-	booking.IsActive = true
+	//booking.IsActive = true
 	booking.UserId = userId
 	booking.Price = price
 	booking.BookingStatus = entity.BookingStatusBooked
@@ -148,11 +159,14 @@ func (s *BookingService) DeleteBooking(id int, userId int) error {
 	if booking == nil {
 		return BookingNotFoundError
 	}
+	if booking.BookingStatus == entity.BookingStatusCancelled {
+		return fmt.Errorf("Booking already cancelled")
+	}
 	if booking.UserId != userId {
 		return UserNotAuthorizedError
 	}
 	booking.BookingStatus = entity.BookingStatusCancelled
-	booking.IsActive = false
+	//booking.IsActive = false
 	err = s.bookingRepo.Update(booking)
 	if err != nil {
 		return fmt.Errorf("error cancelling booking: %w", err)
